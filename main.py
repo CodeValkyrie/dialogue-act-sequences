@@ -32,7 +32,7 @@ def train(model, data, learning_rate, batch_size, epochs):
     criterion = nn.CrossEntropyLoss()
 
     # ADJUST FOR OTHER OPTIMISERS
-    optimiser = optim.Adam(model.parameters())
+    optimiser = optim.Adam(model.parameters(), lr=learning_rate)
 
     model.train()
     total_loss = 0
