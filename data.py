@@ -1,31 +1,80 @@
 import pandas as pd
 import numpy as np
 import torch
+import json
 
 class Dataset():
 
-    def __init__(self, dialogue_IDs):
-        'Initialization'
+    def __init__(self):
+        """ Initialization consisting of reading in all the dialogue IDs and the mapping from vector representations
+            of the classes to the textual representation.
+        """
 
-        self.dialogue_IDs = dialogue_IDs
+        self.dialogue_IDs = self.load_dialogue_IDs("data/dialogue_ids.txt")
+        self.class_dict = self.load_class_representation("data/class_vectors.txt")
 
     def __len__(self):
-        'Denotes the total number of samples'
+        """ Denotes the total number of dialogues. """
         return len(self.dialogue_IDs)
 
     def __getitem__(self, index):
-        """ Generates the matrix representation of the dialogue with the given index"""
+        """ Generates the matrix representation of the dialogue with the given index. """
         ID = self.dialogue_IDs[index]
+        return torch.load('data/dialogue-' + ID + '.pt')
 
-        return torch.load('-'.join(['data/dialogue', ID, "level" + level, '.pt']))
+    def load_dialogue_IDs(self, filename):
+        """ Loads and returns the list of unique dialogue IDs of the data set from filename. """
+        with open(filename, "r") as file:
+            return file.readlines()
+
+    def load_class_representation(self, filename):
+        """ Loads and returns the dictionary containing the class vector representations of (speaker, DA) tuples
+            from filename. """
+        class_dict_reverse = dict()
+        class_dict = dict()
+
+        # Reads in the reverse dictionary from the given file.
+        with open('data/class_vectors.txt') as file:
+            class_dict_reverse = json.load(file)
+
+        # Inverts the dictionary to get the vector representation as key and the turn tuple as value.
+        for speaker_DA, representation in class_dict_reverse.items():
+            class_dict[representation] = speaker_DA
+        return class_dict
+
+    def get_batch_labels(self, dialogue, batch_size=16):
+        """ Slices a given dialogue in batches and the corresponding labels and returns a list
+            containing (batch, labels) for each batch.
+
+            Args:
+                dialogue    = a PyTorch tensor of shape (sequence_length, number_of_turns, number_of_classes)
+                batch_size  = the chosen batch size to split the dialogue into
+
+            Returns:
+                - A list of (batch, labels) tuples
+                batch   = a PyTorch tensor of shape (sequence_length, batch_size, number_of_classes)
+                labels  = a PyTorch tensor of shape (sequence_length, batch_size, number_of_classes)
+        """
+        dialogue = dialogue.numpy()
+        dialogue_length = dialogue.shape[1]
+        batch_tuples = []
+
+        # Following adapted from https://stackoverflow.com/questions/48702808/numpy-slicing-with-batch-size.
+        for i in range(0, dialogue_length - 1, batch_size):
+            batch = data[i:min(i + batch_size, dialogue_length - 1), :]
+
+            # The labels of the sequences are just the next labels in the sequence.
+            labels = data[(i + 1):min((i + 1) + batch_size, dialogue_length), :]
+            batch_tuples.append((torch.from_numpy(batch), torch.from_numpy(labels)))
+        return batch_tuples
 
 # Extracting statistics from data
-# Reading in all dialogues and saving them in matrix format to .pt files onder the dialogue ID name
 # Making batches and labels of the dialogues
 
 
 
 class Preprocessing():
+    """ Class defining the variables and functions belonging to a preprocessed data object. """
 
     def __init__(self, filename):
         """ Reads in the data file containing all the dialogues and stores important information about the data.
@@ -41,29 +90,28 @@ class Preprocessing():
         """
         self.data = pd.read_csv(filename)
 
-        # Dialogue information
+        # Dialogue information.
         self.dialogue_IDs = sorted(list(set(self.data['dialogue_id'])))
         self.number_of_dialogues = len(self.dialogue_IDs)
 
-        # Dialogue Act information
+        # Dialogue Act information.
         self.DAs = sorted(list(set(self.data['dialogue_act'])))
         self.number_of_DAs = len(self.DAs)
 
-        # Extracts the unique (speaker, DA) tuples from the dataset
+        # Extracts the unique (speaker, DA) dialogue turn tuples from the data set.
         speaker_DA_tuples = self.data[['speaker','dialogue_act']].drop_duplicates().values
         speaker_DA_tuples = [tuple(pair) for pair in speaker_DA_tuples]
 
+        # Constructs a dictionary consisting of the unique turn tuples and their corresponding vector representation.
         self.number_of_classes = len(speaker_DA_tuples)
-
-        # Constructs a class representation vector for each unique (speaker, DA) tuple and stores them in a dictionary
         self.class_dict = dict()
         class_vectors = np.identity(self.number_of_classes)
         for i in range(self.number_of_classes):
             self.class_dict[speaker_DA_tuples[i]] = class_vectors[i]
 
     def save_dialogues_as_matrices(self, sequence_length=7):
-        """ Reads in the data file containing all the dialogues and stores the matrix representation
-            (sequence_length, number_of_utterances, number_of_classes) of each dialogue in a separate .pt file.
+        """ Stores the matrix representation (sequence_length, number_of_utterances, number_of_classes) of each
+            dialogue in the data set into a separate .pt file.
 
             Args:
                 sequence_length = the length of the training sequences after which the hidden state is reset.
@@ -80,7 +128,7 @@ class Preprocessing():
             turns = [tuple(pair) for pair in turns]
             dialogue_length = len(turns)
 
-            # Converts the turn tuple sequence to a numerical 2D matrix representation.
+            # Converts the turn tuple sequence to a numerical 2D matrix representation (samples, classes).
             dialogue_matrix = np.array([]).reshape(-1, self.number_of_classes)
             for turn in turns:
                 class_vector = self.class_dict[turn].reshape(-1, self.number_of_classes)
@@ -99,18 +147,23 @@ class Preprocessing():
                             print(sequence[i,0])
                 """
                 dialogue_representation = np.concatenate((dialogue_representation, sequence), axis=1)
-            # Converts the 3D dialogue sequences matrix to a tensor and saving it in a file.
+
+            # Converts the 3D dialogue sequences matrix to a tensor and saves it in a file.
             dialogue_tensor = torch.from_numpy(dialogue_representation)
-            save_name = 'dialogue' + ID + '-level-' + str(int(dialogue_data['level'].iloc[0])) + '.pt'
-            #!!!!torch.save(dialogue_tensor, save_name)!!!!
+            #torch.save(dialogue_tensor, 'data/dialogue-' +  ID + '.pt')
 
     def save_dialogue_IDs(self):
-        """ Returns and stores the unique dialogue IDs of the data set in a file named dialogue_ids.txt. """
+        """ Returns and stores the list of unique dialogue IDs of the data set in a file named dialogue_ids.txt. """
+        with open("data/dialogue_ids.txt", "w") as file:
+            for ID in self.dialogue_IDs:
+                file.write(ID)
         return self.dialogue_IDs
 
     def save_class_representation(self):
-        """ Returns and stores a dictionary containing the class vector representations of (speaker, DA) tuples
-            in a file named class_vectors.py. """
+        """ Returns and stores the dictionary containing the class vector representations of (speaker, DA) tuples
+            in a file named class_vectors.txt. """
+        with open('data/class_vectors.txt', 'w') as file:
+            json.dump(self.class_dict, file)
         return self.class_dict
 
     def get_DAs(self):
@@ -135,7 +188,7 @@ class Preprocessing():
             level_average = dict()
             for level in levels:
                 level_data = speaker_data[speaker_data['level'] == level]
-                utterance_texts = level(level_data['text'].values)
+                #utterance_texts = level(level_data['text'].values)
                 #level_average[level] =
         return 0
 
@@ -155,4 +208,4 @@ class Preprocessing():
 """ !!!!!! STATISTICS EXTRACTION FUNCTIONS !!!!!!"""
 
 preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-preprocessed.average_sentence_length(['participant'], [1.0])
+preprocessed.save_dialogues_as_matrices(7)
