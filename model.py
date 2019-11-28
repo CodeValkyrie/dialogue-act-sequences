@@ -13,8 +13,8 @@ class RNN(nn.Module):
         """
 
         super(RNN, self).__init__()
-        self.rnn = nn.RNN(n_classes, hidden_nodes, n_layers)
-        self.decoder = nn.Linear(hidden_nodes, n_classes)
+        self.rnn = nn.RNN(n_classes, hidden_nodes, n_layers).double()
+        self.decoder = nn.Linear(hidden_nodes, n_classes).double()
 
         self.hidden_nodes = hidden_nodes
         self.n_layers = n_layers
@@ -27,7 +27,6 @@ class RNN(nn.Module):
                 input           = the input data
                 hidden_state    = the hidden state of the RNN storing memory
         """
-
         output, hidden = self.rnn(input, hidden_state)
         decoded_output = self.decoder(output)
         return decoded_output, hidden

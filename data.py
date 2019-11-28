@@ -25,22 +25,15 @@ class Dataset():
     def load_dialogue_IDs(self, filename):
         """ Loads and returns the list of unique dialogue IDs of the data set from filename. """
         with open(filename, "r") as file:
-            return file.readlines()
+            return file.readlines()[0].split()
 
     def load_class_representation(self, filename):
         """ Loads and returns the dictionary containing the class vector representations of (speaker, DA) tuples
             from filename. """
-        class_dict_reverse = dict()
-        class_dict = dict()
 
         # Reads in the reverse dictionary from the given file.
         with open('data/class_vectors.txt') as file:
-            class_dict_reverse = json.load(file)
-
-        # Inverts the dictionary to get the vector representation as key and the turn tuple as value.
-        for speaker_DA, representation in class_dict_reverse.items():
-            class_dict[representation] = speaker_DA
-        return class_dict
+            return json.load(file)
 
     def get_batch_labels(self, dialogue, batch_size=16):
         """ Slices a given dialogue in batches and the corresponding labels and returns a list
@@ -61,12 +54,15 @@ class Dataset():
 
         # Following adapted from https://stackoverflow.com/questions/48702808/numpy-slicing-with-batch-size.
         for i in range(0, dialogue_length - 1, batch_size):
-            batch = data[i:min(i + batch_size, dialogue_length - 1), :]
+            batch = dialogue[:, i:min(i + batch_size, dialogue_length - 1), :]
 
             # The labels of the sequences are just the next labels in the sequence.
-            labels = data[(i + 1):min((i + 1) + batch_size, dialogue_length), :]
+            labels = dialogue[:, (i + 1):min((i + 1) + batch_size, dialogue_length), :]
             batch_tuples.append((torch.from_numpy(batch), torch.from_numpy(labels)))
         return batch_tuples
+
+    def get_number_of_classes(self):
+        return len(self.class_dict.keys())
 
 # Extracting statistics from data
 # Making batches and labels of the dialogues
@@ -150,21 +146,24 @@ class Preprocessing():
 
             # Converts the 3D dialogue sequences matrix to a tensor and saves it in a file.
             dialogue_tensor = torch.from_numpy(dialogue_representation)
-            #torch.save(dialogue_tensor, 'data/dialogue-' +  ID + '.pt')
+            torch.save(dialogue_tensor, 'data/dialogue-' +  ID + '.pt')
 
     def save_dialogue_IDs(self):
         """ Returns and stores the list of unique dialogue IDs of the data set in a file named dialogue_ids.txt. """
         with open("data/dialogue_ids.txt", "w") as file:
             for ID in self.dialogue_IDs:
-                file.write(ID)
+                file.write(ID + " ")
         return self.dialogue_IDs
 
     def save_class_representation(self):
         """ Returns and stores the dictionary containing the class vector representations of (speaker, DA) tuples
             in a file named class_vectors.txt. """
+        class_dict = {}
+        for key, value in self.class_dict.items():
+            class_dict['-'.join(key)] = list(value)
         with open('data/class_vectors.txt', 'w') as file:
-            json.dump(self.class_dict, file)
-        return self.class_dict
+            json.dump(class_dict, file)
+        return class_dict
 
     def get_DAs(self):
         """ Returns a list containing the unique Dialogue Acts of the data set. """
@@ -206,6 +205,3 @@ class Preprocessing():
 
 
 """ !!!!!! STATISTICS EXTRACTION FUNCTIONS !!!!!!"""
-
-preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-preprocessed.save_dialogues_as_matrices(7)

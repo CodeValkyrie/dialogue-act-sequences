@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import precision_score, recall_score, f1_score
-import model
+from model import RNN
+from data import Dataset, Preprocessing
 
 # Global Variables initialisation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -11,14 +12,30 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def main():
     """ Runs the RNN algorithm. """
 
-    model = model.RNNModel(n_input, hidden_nodes, n_layers, n_classes).to(device)
+    # Preprocesses the data.
+    preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
+    preprocessed.save_dialogue_IDs()
+    preprocessed.save_class_representation()
+    preprocessed.save_dialogues_as_matrices(sequence_length=7)
+
+    # Makes a Dataset object from the dataset.
+    dataset = Dataset()
+
+    # Defines hyperparameters for model initialisation.
+    n_classes = dataset.get_number_of_classes()
+    n_layers = 2
+    hidden_nodes = 64
+
+    rnn = RNN(n_classes, hidden_nodes, n_layers).to(device)
+
+    train(rnn, dataset, 1e-3, 16)
     return 0
 
 ###################################################################################
 #                            HELPER FUNCTIONS                                     #
 ###################################################################################
 
-def train(model, data, learning_rate, batch_size, epochs):
+def train(model, data, learning_rate, batch_size):
     """ Trains a given RNN model on a given preprocessed data set with a specified learning rate,
         batch size and number of epochs.
 
@@ -35,25 +52,23 @@ def train(model, data, learning_rate, batch_size, epochs):
     optimiser = optim.Adam(model.parameters(), lr=learning_rate)
 
     model.train()
-    total_loss = 0
-    for batch, labels in data:
-        optimiser.zero_grad()
-        batch = batch.to(device)
-        labels = labels.to(device)
-        output = model(data, None)
-        loss = criterion(output.view(-1, size_classes), labels)
-        loss.backward()
-        optimiser.step()
-        total_loss += loss.item()
-        """if batch % args.log_interval == 0 and batch > 0:
-            cur_loss = total_loss / args.log_interval
-            elapsed = time.time() - start_time
-            print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                    'loss {:5.2f} | ppl {:8.2f}'.format(
-                epoch, batch, len(train_data) // args.bptt, lr,
-                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
-            total_loss = 0
-            start_time = time.time()"""
+    for dialogue in data:
+        batches_labels = data.get_batch_labels(dialogue, batch_size)
+        total_loss = 0
+        for batch, labels in batches_labels:
+            optimiser.zero_grad()
+            batch = batch.to(device)
+            labels = labels.to(device)
+            output, hidden = model(batch, None)
+
+            # The output needs to be transposed to (batch, number_of_classes, sequence_length) for the criterion.
+            # The output can stay 3D but the labels must be 2D, so the following takes the argmax of the labels
+            loss = criterion(output.permute(1, 2, 0), torch.argmax(labels, dim=2).permute(1, 0))
+            loss.backward()
+            optimiser.step()
+            total_loss += loss.item()
+            print(loss.item())
+        break
 
 def evaluate(model, data, labels):
     """ Returns the prediction evaluation scores precision, recall and F1 of the RNN model
