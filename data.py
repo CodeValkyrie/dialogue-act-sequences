@@ -12,14 +12,19 @@ class Dataset():
 
         self.dialogue_IDs = self.load_dialogue_IDs("data/dialogue_ids.txt")
         self.class_dict = self.load_class_representation("data/class_vectors.txt")
+        self.cross_validation_train_IDs = []
+        self.cross_validation_test_IDs = []
 
     def __len__(self):
         """ Denotes the total number of dialogues. """
         return len(self.dialogue_IDs)
 
-    def __getitem__(self, index):
+    def get_dialogue(self, index, k, train_test):
         """ Generates the matrix representation of the dialogue with the given index. """
-        ID = self.dialogue_IDs[index]
+        if train_test == 'train':
+            ID = self.cross_validation_train_IDs[k][index]
+        else:
+            ID = self.cross_validation_test_IDs[k][index]
         return torch.load('data/dialogue-' + ID + '.pt')
 
     def load_dialogue_IDs(self, filename):
@@ -63,6 +68,53 @@ class Dataset():
 
     def get_number_of_classes(self):
         return len(self.class_dict.keys())
+
+    def get_class_decoder(self):
+        return self.class_dict
+
+    def make_k_fold_cross_validation_split(self, levels, k):
+        """ Returns k training and test splits for the given levels.
+
+            Args:
+                levels = a list containing integers denoting the ability levels, chosen from {1, 2, 3, 4}
+                k      = the number of training and test splits needed
+
+            Output:
+                It adjusts the object variables self.cross_validation_train_IDs and self.cross_validation_test_IDs,
+                so that they hold k lists of IDs for the training and testing respectively.
+        """
+
+        # Extracts the IDs belonging to the different levels that need to be split.
+        ids = self.dialogue_IDs
+        ids_per_level = dict()
+        for level in levels:
+            level_ids = []
+            for ID in ids:
+                if ID[0] == str(level):
+                    level_ids.append(ID)
+                elif ID[0] not in str(levels):
+                    ids.remove(ID)
+            ids_per_level[level] = level_ids
+
+        # Initialising the dimensions of the object variables, so the splits can be easily added.
+        self.cross_validation_train_IDs = []
+        self.cross_validation_test_IDs = []
+        for i in range(k):
+            self.cross_validation_train_IDs.append([])
+            self.cross_validation_test_IDs.append([])
+
+        # Selects k sets of train and test data IDs with equal distribution over the levels.
+        for level, IDs in ids_per_level.items():
+            chunk_size = int(len(IDs) / k)
+            test_samples = []
+            for i in range(k):
+                if i == k-1:
+                    test_samples.append(IDs[i * chunk_size:])
+                else:
+                    test_samples.append(IDs[i * chunk_size:i * chunk_size + chunk_size])
+            train_samples = [list(set(IDs) - set(test_IDs)) for test_IDs in test_samples]
+            self.cross_validation_train_IDs = [x + y for x, y in zip(self.cross_validation_train_IDs, train_samples)]
+            self.cross_validation_test_IDs = [x + y for x, y in zip(self.cross_validation_test_IDs, test_samples)]
 
 # Extracting statistics from data
 # Making batches and labels of the dialogues
@@ -134,14 +186,14 @@ class Preprocessing():
             dialogue_representation = np.array([]).reshape(sequence_length, -1, self.number_of_classes)
             for i in range(dialogue_length - (sequence_length - 1)):
                 sequence = dialogue_matrix[i:i+sequence_length, ].reshape(sequence_length, -1, self.number_of_classes)
-                """
-                Checking if the sequences make sense
+
+                """ print(ID)
+                # Checking if the sequences make sense
                 for i in range(7):
                     for turn, clas in self.class_dict.items():
                         if np.array_equal(clas, sequence[i,0]):
                             print(turn)
-                            print(sequence[i,0])
-                """
+                            print(sequence[i,0])"""
                 dialogue_representation = np.concatenate((dialogue_representation, sequence), axis=1)
 
             # Converts the 3D dialogue sequences matrix to a tensor and saves it in a file.

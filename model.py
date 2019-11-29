@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-class RNN(nn.Module):
+class LSTM(nn.Module):
     """ Recurrent Neural Network (RNN) model"""
 
     def __init__(self, n_classes, hidden_nodes, n_layers):
@@ -12,8 +12,8 @@ class RNN(nn.Module):
                 n_classes       = the number of output classes
         """
 
-        super(RNN, self).__init__()
-        self.rnn = nn.RNN(n_classes, hidden_nodes, n_layers).double()
+        super(LSTM, self).__init__()
+        self.rnn = nn.LSTM(n_classes, hidden_nodes, n_layers).double()
         self.decoder = nn.Linear(hidden_nodes, n_classes).double()
 
         self.hidden_nodes = hidden_nodes
