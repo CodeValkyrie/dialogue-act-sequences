@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import precision_score, recall_score, f1_score
 from model import LSTM
-from data import Dataset, Preprocessing
+from data import DataSet
 import numpy as np
 
 # Global Variables initialisation
@@ -13,33 +13,21 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def main():
     """ Runs the RNN algorithm. """
 
-    # Preprocesses the data.
-    preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-    preprocessed.save_dialogue_IDs()
-    preprocessed.save_class_representation()
-    preprocessed.save_dialogues_as_matrices(sequence_length=7)
-
     # Makes a Dataset object from the dataset.
-    dataset = Dataset()
-
-    dataset.make_k_fold_cross_validation_split([1,2,3], 10)
-    # print(dataset.cross_validation_test_IDs)
-    # print(len(dataset.cross_validation_test_IDs))
-    # print(dataset.cross_validation_train_IDs)
-    # print(len(dataset.cross_validation_train_IDs))
+    dataset = DataSet()
 
     # Defines hyperparameters for model initialisation.
     n_classes = dataset.get_number_of_classes()
     n_layers = 1
     hidden_nodes = 64
 
-    rnn = LSTM(n_classes, hidden_nodes, n_layers).to(device)
+    lstm = LSTM(n_classes, hidden_nodes, n_layers).to(device)
 
     # Defines hyperparameters for training initialisation.
     learning_rate = 5e-3
     batch_size = 16
     epochs = 10
-    train(rnn, dataset, learning_rate, batch_size, epochs)
+    train(lstm, dataset, learning_rate, batch_size, epochs)
     return 0
 
 ###################################################################################
@@ -67,7 +55,6 @@ def train(model, data, learning_rate, batch_size, epochs):
     total_loss = 0
     for epoch in range(epochs):
         for dialogue in data:
-            dialogue = data.get_dialogue(index, k, train_test):
             batches_labels = data.get_batch_labels(dialogue, batch_size)
 
             for batch, labels in batches_labels:
@@ -90,7 +77,7 @@ def train(model, data, learning_rate, batch_size, epochs):
                 counter += 1
             print(total_loss / counter)
 
-def evaluate(model, data, labels):
+def evaluate(model, data):
     """ Returns the prediction evaluation scores precision, recall and F1 of the RNN model
         on a data sequences of length x after 10-fold cross-validation
 
@@ -102,11 +89,15 @@ def evaluate(model, data, labels):
         Returns:
             (Precision, recall, F1)    = a tuple containing the scores of the precision, recall and F1 measures
     """
-    prediction = predict(model, data)
-    precision = precision_score(labels, prediction)
-    recall = recall_score(labels, prediction)
-    f1 = f1_score(labels, prediction)
-    return precision, recall, f1
+
+    for dialogue in data:
+        batches_labels = data.get_batch_labels(dialogue, batch_size=16)
+        for batch, labels in batches_labels:
+            prediction = predict(model, batch)
+            precision = precision_score(labels, prediction)
+            recall = recall_score(labels, prediction)
+            f1 = f1_score(labels, prediction)
+            print(precision, recall, f1)
 
 
 
@@ -142,4 +133,4 @@ def generate_sequence(model, input, x):
 
 #####################################################################################
 
-main()
+#main()
