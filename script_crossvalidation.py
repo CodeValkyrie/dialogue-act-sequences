@@ -1,28 +1,54 @@
-import main
+import torch
+import pandas
+from crossvalidation import CrossValidation
+from data import DataSet, Preprocessing
+from model import LSTM
 
-# Defines the k-fold cross-validation parameters.
-LEVELS = [1, 2, 3]
-K = 10
 
-# Model Hyperparameters.
-N_LAYERS = 1
-HIDDEN_NODES = 64
+""" This is a scrpt that performs cross-validation on an lstm model given the different settings below.
 
-# Training hyperparameters
-LEARNING_RATE = 5e-3
-BATCH_SIZE = 16
-EPOCHS = 10
+    The variables that need to be specified:
+        sequence_lengths    = a list containing different sequence lengths
+        levels              = a list containing the ability levels in the data to be considered
+        k                   = scalar specifying the fold of the cross-validation
+        number_of_layers    = scalar specifying the number of layers in the lstm model
+        hidden_nodes        = scalar specifying the number of hidden nodes in the LSTM model's layers
+        learning_rate       = scalar specifying the learning rate of the LSTM's training 
+        batch_size          = scalar specifying the batch size of the LSTM's training
+        epochs              = scalar specifying the number of epochs during the LSTM's training
+        
+    The script outputs a matrix containing the mean accuracy of the cross-validation per sequence length        
+"""
 
-# Makes a Dataset object from the dataset and creates the k-fold cross-validation splits.
-dataset = Dataset()
-dataset.make_k_fold_cross_validation_split(LEVELS, K)
 
-n_classes = dataset.get_number_of_classes()
+# Analysis parameters.
+sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
+levels = [1, 2, 3, 4]
+k = 10
+
+# Model hyper parameters.
+number_of_layers = 1
+hidden_nodes = 64
+
+# Training hyper parameters.
+learning_rate = 5e-3
+batch_size = 16
+epochs = 20
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-for i in range(K):
-    dataset.set_k_iteration(i)
-    rnn = LSTM(n_classes, hidden_nodes, n_layers).to(device)
-    train(rnn, dataset, learning_rate, batch_size, epochs)
+for sequence_length in sequence_lengths:
 
-    return 0
+    # Preprocesses the data for the sequence length.
+    preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
+    preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length)
+    data = DataSet()
+    n_classes = data.get_number_of_classes()
+
+    # Initialises LSTM model.
+    lstm = LSTM(n_classes, hidden_nodes, number_of_layers).to(device)
+
+    # Performs cross-validation.
+    cross_validation = CrossValidation(data, k)
+    cross_validation.make_k_fold_cross_validation_split(levels)
+    scores = cross_validation.validate(lstm, learning_rate, batch_size, epochs)

@@ -2,13 +2,14 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import precision_score, recall_score, f1_score
+import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from model import LSTM
 from data import DataSet
-import numpy as np
 
 # Global Variables initialisation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def main():
     """ Runs the RNN algorithm. """
@@ -33,6 +34,7 @@ def main():
 ###################################################################################
 #                            HELPER FUNCTIONS                                     #
 ###################################################################################
+
 
 def train(model, data, learning_rate, batch_size, epochs):
     """ Trains a given RNN model on a given preprocessed data set with a specified learning rate,
@@ -75,7 +77,8 @@ def train(model, data, learning_rate, batch_size, epochs):
                 optimiser.step()
                 total_loss += loss.item()
                 counter += 1
-            print(total_loss / counter)
+        print(total_loss / counter)
+
 
 def evaluate(model, data):
     """ Returns the prediction evaluation scores precision, recall and F1 of the RNN model
@@ -89,16 +92,16 @@ def evaluate(model, data):
         Returns:
             (Precision, recall, F1)    = a tuple containing the scores of the precision, recall and F1 measures
     """
-
+    i = 0
+    accuracy_total = 0
     for dialogue in data:
         batches_labels = data.get_batch_labels(dialogue, batch_size=16)
         for batch, labels in batches_labels:
-            prediction = predict(model, batch)
-            precision = precision_score(labels, prediction)
-            recall = recall_score(labels, prediction)
-            f1 = f1_score(labels, prediction)
-            print(precision, recall, f1)
-
+            labels = torch.argmax(labels, dim=2).numpy().reshape(-1)
+            prediction = torch.argmax(predict(model, batch), dim=2).detach().numpy().reshape(-1)
+            accuracy_total += accuracy_score(labels, prediction)
+            i += 1
+    return accuracy_total / i
 
 
 def predict(model, input):
@@ -111,7 +114,7 @@ def predict(model, input):
         Returns:
             output  = predicted next data point or data points given the input
     """
-    return torch.softmax(model(input, None)[0])
+    return torch.softmax(model(input, None)[0], dim=2)
 
 def generate_sequence(model, input, x):
     """ Returns a generated sequence of length x given an input.
