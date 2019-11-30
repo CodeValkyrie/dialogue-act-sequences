@@ -1,5 +1,6 @@
 import torch
-import pandas
+import pandas as pd
+import numpy as np
 from crossvalidation import CrossValidation
 from data import DataSet, Preprocessing
 from model import LSTM
@@ -37,6 +38,7 @@ epochs = 20
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+output = np.empty(1, 2)
 for sequence_length in sequence_lengths:
 
     # Preprocesses the data for the sequence length.
@@ -52,3 +54,8 @@ for sequence_length in sequence_lengths:
     cross_validation = CrossValidation(data, k)
     cross_validation.make_k_fold_cross_validation_split(levels)
     scores = cross_validation.validate(lstm, learning_rate, batch_size, epochs)
+    output = np.concatenate((output, np.mean(scores)), axis=0)
+
+# Makes a pandas DataFrame to output to a .csv file.
+data = pd.DataFrame(output, columns=['sequence length','accuracy'])
+data.to_csv('analyses/accuracy_per_sequence_length.csv', index=None, header=True)
