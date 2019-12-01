@@ -36,10 +36,9 @@ learning_rate = 5e-3
 batch_size = 16
 epochs = 20
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-output = np.empty((1, 2))
+output = np.empty((1, 3))
 for sequence_length in sequence_lengths:
+    print("Cross-validation for sequence length {}".format(sequence_length))
 
     # Preprocesses the data for the sequence length.
     preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
@@ -47,16 +46,13 @@ for sequence_length in sequence_lengths:
     data = DataSet()
     n_classes = data.get_number_of_classes()
 
-    # Initialises LSTM model.
-    lstm = LSTM(n_classes, hidden_nodes, number_of_layers).to(device)
-
     # Performs cross-validation.
     cross_validation = CrossValidation(data, k)
     cross_validation.make_k_fold_cross_validation_split(levels)
-    scores = cross_validation.validate(lstm, learning_rate, batch_size, epochs)
-    entry = np.array([sequence_length, np.mean(scores)])
+    scores = cross_validation.validate(n_classes, hidden_nodes, number_of_layers, learning_rate, batch_size, epochs)
+    entry = np.array([sequence_length, np.mean(scores), np.std(scores)]).reshape(-1, 3)
     output = np.concatenate((output, entry), axis=0)
 
 # Makes a pandas DataFrame to output to a .csv file.
-data = pd.DataFrame(output, columns=['sequence length', 'accuracy'])
+data = pd.DataFrame(output, columns=['sequence length', 'accuracy', 'SD'])
 data.to_csv('analyses/accuracy_per_sequence_length.csv', index=None, header=True)

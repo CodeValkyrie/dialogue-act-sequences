@@ -10,8 +10,8 @@ class DataSet:
         """ Initialization consisting of reading in all the dialogue IDs and the mapping from vector representations
             of the classes to the textual representation. """
 
-        self.dialogue_ids = self.load_dialogue_ids("data/dialogue_ids.txt")
-        self.class_dict = self.load_class_representation("data/class_vectors.txt")
+        self.dialogue_ids = self.__load_dialogue_ids("data/dialogue_ids.txt")
+        self.class_dict = self.__load_class_representation("data/class_vectors.txt")
 
     def __len__(self):
         """ Denotes the total number of dialogues. """
@@ -22,12 +22,12 @@ class DataSet:
         id = self.dialogue_ids[index]
         return torch.load('data/dialogue-' + id + '.pt')
 
-    def load_dialogue_ids(self, filename):
+    def __load_dialogue_ids(self, filename):
         """ Loads and returns the list of unique dialogue IDs of the data set from filename. """
         with open(filename, "r") as file:
             return file.readlines()[0].split()
 
-    def load_class_representation(self, filename):
+    def __load_class_representation(self, filename):
         """ Loads and returns the dictionary containing the class vector representations of (speaker, DA) tuples
             from filename. """
 
@@ -72,11 +72,6 @@ class DataSet:
     def set_dialogue_ids(self, dialogue_ids):
         """ Sets the list of dialogue ids to dialogue_ids. """
         self.dialogue_ids = dialogue_ids
-
-
-
-# Extracting statistics from data
-
 
 
 class Preprocessing():
@@ -171,15 +166,28 @@ class Preprocessing():
         """ Returns a list containing the unique Dialogue Acts of the data set. """
         return self.DAs
 
-    def average_sentence_length(self, speakers, levels):
-        """ Returns the average sentence length of the given speaker(s) on the given level(s) of language ability.
+
+class Statistics:
+
+    def __init__(self, data):
+        """ Initialises the Statistics object for a preprocessed data set.
+
+            Input:
+                data    = an object of the Preprocessing class
+        """
+        self.data = data
+
+    def get_average_utterance_length(self, speakers, levels):
+        """ Returns and saves the average utterance length of the given speaker(s) on the given level(s) of
+            language ability.
 
             Args:
                 speakers = a list containing one or both of: 'participant', 'interviewer'
                 levels   = a list containing a subset of {1, 2, 3, 4}
 
-            Returns:
-                 A dictionary containing the average count for every input speaker and level.
+            Output:
+                 - Returns a dictionary containing the average count for every input speaker and level.
+                 - Saves adictionary containing the average counts per speaker per level to a .csv file.
         """
         if speakers == [] or levels == []:
             return None
@@ -189,21 +197,34 @@ class Preprocessing():
             level_average = dict()
             for level in levels:
                 level_data = speaker_data[speaker_data['level'] == level]
-                #utterance_texts = level(level_data['text'].values)
-                #level_average[level] =
+                # utterance_texts = level(level_data['text'].values)
+                # level_average[level] =
         return 0
 
-    def average_word_length(self, speaker, level):
-        """ Returns the average word length of the given speaker(s) on the given level(s) of language ability.
+    def get_most_common_bigrams(self, n, speakers, levels):
+        """ Returns and saves the n most common bigrams per level per speaker and their normalised occurance.
 
             Args:
-                speaker = a list containing one or both of: 'participant', 'interviewer'
-                level   = a list containing a subset of {1, 2, 3, 4}
+                n        = the number of most common bigrams the function must return. If the number is higher than the
+                           total number of bigrams, the total number of bigrams is returned
+                speakers = a list containing one or both of: 'participant', 'interviewer'
+                levels   = a list containing a subset of {1, 2, 3, 4}
 
-            Returns:
-                 A matrix containing the average count on index (speaker, level), for every input speaker and level.
+            Output:
+                 - ????
+                 - ????
         """
         return 0
 
+    def get_DA_distributions(self, speakers, levels):
+        """ Returns and saves the distribution of DAs per level per speaker.
 
-""" !!!!!! STATISTICS EXTRACTION FUNCTIONS !!!!!!"""
+            Args:
+                speakers = a list containing one or both of: 'participant', 'interviewer'
+                levels   = a list containing a subset of {1, 2, 3, 4}
+
+            Output:
+                 - ????
+                 - ????
+        """
+        return 0

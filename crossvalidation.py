@@ -1,5 +1,10 @@
 import numpy as np
+import torch
 from main import train, evaluate
+from model import LSTM
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class CrossValidation:
@@ -61,15 +66,17 @@ class CrossValidation:
             self.train_ids = [x + y for x, y in zip(self.train_ids, train_samples)]
             self.test_ids = [x + y for x, y in zip(self.test_ids, test_samples)]
 
-    def validate(self, model, lr=5e-3, batch_size=16, epochs=20):
+    def validate(self, n_classes, hidden_nodes, number_of_layers, lr=5e-3, batch_size=16, epochs=20):
         """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
             set with given training parameters.
 
             Args:
-                model       = a neural network model that needs to be evaluated
-                lr          = learning rate, default is 5e-3
-                batch_size  = the batch size
-                epochs      = the number of epochs
+                n_classes       = the number of classes is the dataset
+                hidden_nodes    = the number of hidden nodes in the hidden layers of the LSTM model
+                number_of_layers= the number of layers of the LSTM model
+                lr              = learning rate, default is 5e-3
+                batch_size      = the batch size
+                epochs          = the number of epochs
 
             Returns:
                 - A tuple containing the average (precision, recall, F1-measure).
@@ -77,6 +84,10 @@ class CrossValidation:
         """
         scores = np.empty(self.k)
         for i in range(self.k):
+
+            # Initialises model.
+
+            model = LSTM(n_classes, hidden_nodes, number_of_layers).to(device)
 
             # Trains the model on the training set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.train_ids[i])

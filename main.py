@@ -94,6 +94,7 @@ def evaluate(model, data):
     """
     i = 0
     accuracy_total = 0
+    model.eval()
     for dialogue in data:
         batches_labels = data.get_batch_labels(dialogue, batch_size=16)
         for batch, labels in batches_labels:
