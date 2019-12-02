@@ -74,7 +74,7 @@ class DataSet:
         self.dialogue_ids = dialogue_ids
 
 
-class Preprocessing():
+class Preprocessing:
     """ Class defining the variables and functions belonging to a preprocessed data object. """
 
     def __init__(self, filename):
@@ -92,8 +92,8 @@ class Preprocessing():
         self.data = pd.read_csv(filename)
 
         # Dialogue information.
-        self.dialogue_IDs = sorted(list(set(self.data['dialogue_id'])))
-        self.number_of_dialogues = len(self.dialogue_IDs)
+        self.dialogue_ids = sorted(list(set(self.data['dialogue_id'])))
+        self.number_of_dialogues = len(self.dialogue_ids)
 
         # Dialogue Act information.
         self.DAs = sorted(list(set(self.data['dialogue_act'])))
@@ -121,7 +121,7 @@ class Preprocessing():
             Output:
                 - Data files in the format 'dialogue<ID>_level<levelint>.pt'
         """
-        for ID in self.dialogue_IDs:
+        for ID in self.dialogue_ids:
 
             # Extracts the turn tuples of the dialogue corresponding to the dialogue ID.
             dialogue_data = self.data[self.data['dialogue_id'] == ID]
@@ -148,9 +148,9 @@ class Preprocessing():
     def save_dialogue_IDs(self):
         """ Returns and stores the list of unique dialogue IDs of the data set in a file named dialogue_ids.txt. """
         with open("data/dialogue_ids.txt", "w") as file:
-            for ID in self.dialogue_IDs:
+            for ID in self.dialogue_ids:
                 file.write(ID + " ")
-        return self.dialogue_IDs
+        return self.dialogue_ids
 
     def save_class_representation(self):
         """ Returns and stores the dictionary containing the class vector representations of (speaker, DA) tuples
@@ -192,14 +192,21 @@ class Statistics:
         if speakers == [] or levels == []:
             return None
 
+        average_utterance_length = dict()
         for speaker in speakers:
-            speaker_data = self.data[self.data['speaker'] == speaker]
-            level_average = dict()
+            average_utterance_length[speaker] = dict()
+            speaker_data = self.data.data[self.data.data['speaker'] == speaker]
             for level in levels:
                 level_data = speaker_data[speaker_data['level'] == level]
-                # utterance_texts = level(level_data['text'].values)
-                # level_average[level] =
-        return 0
+                utterance_texts = level_data['text'].values
+
+                # Computing the utterance lengths without the punctuation
+                utterance_lengths = [len(str(utterance).split()) - 1 for utterance in utterance_texts]
+                l = 'level ' + str(level)
+                average_utterance_length[speaker][l] = float(round(sum(utterance_lengths) / len(utterance_lengths), 2))
+        table = pd.DataFrame(average_utterance_length)
+        table.to_csv('analyses/average_utterance_length.csv')
+        return table
 
     def get_most_common_bigrams(self, n, speakers, levels):
         """ Returns and saves the n most common bigrams per level per speaker and their normalised occurance.
@@ -214,17 +221,59 @@ class Statistics:
                  - ????
                  - ????
         """
-        return 0
+        for speaker in speakers:
+            speaker_data = self.data.data[self.data.data['speaker'] == speaker]
 
-    def get_DA_distributions(self, speakers, levels):
-        """ Returns and saves the distribution of DAs per level per speaker.
+            # Initialises a dictionary to count the bigrams per level.
+            level_bigrams = dict()
+            for level in levels:
+                level_bigrams[str(level)] = dict()
+
+            total_bigrams_per_level = np.zeros(4)
+            # Counts the bigrams per level
+            for dialogue_id in self.data.dialogue_ids:
+                level = dialogue_id[0]
+                dialogue_data = speaker_data[speaker_data['dialogue_id'] == dialogue_id]
+                dialogue_DAs = dialogue_data['dialogue_act'].values
+                total_bigrams_per_level[int(level) - 1] += len(dialogue_DAs)
+                for i in range(len(dialogue_DAs)-1):
+                    bigram = (dialogue_DAs[i], dialogue_DAs[i + 1])
+                    if bigram in level_bigrams[level].keys():
+                        level_bigrams[level][bigram] += 1
+                    else:
+                        level_bigrams[level][bigram] = 1
+            return 0
+
+    def get_da_distributions(self, speakers, levels):
+        """ Saves the distribution of DAs per level per speaker.
 
             Args:
                 speakers = a list containing one or both of: 'participant', 'interviewer'
                 levels   = a list containing a subset of {1, 2, 3, 4}
 
             Output:
-                 - ????
-                 - ????
+                 -  Saves a DataFrame containing the dialogue act distributions per level per speaker to
+                    <speaker>_dialogue-act_distributions.csv.
         """
-        return 0
+        for speaker in speakers:
+            speaker_data = self.data.data[self.data.data['speaker'] == speaker]
+            distributions = pd.DataFrame(index=sorted(list(set(speaker_data['dialogue_act']))))
+            for level in levels:
+                level_data = speaker_data[speaker_data['level'] == level]
+                distribution = level_data['dialogue_act'].value_counts()
+                nd = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
+                normalised_distribution = pd.DataFrame(nd.values, index=nd.index, columns=['level ' + str(level)])
+                distributions = distributions.merge(normalised_distribution, how='left', left_index=True, right_index=True)
+                distributions.to_csv('analyses/' + speaker + '_dialogue_act_distributions.csv')
+
+    def get_da_distribution(self):
+        """ Returns the DA distribution and saves it to a csv file.
+
+            Output:
+                - Returns a DataFrame containing the percentages of occurance of each dialogue act
+                - Saves the distribution to a file named 'dialogue_act_distribution.csv'
+        """
+        distribution = self.data.data['dialogue_act'].value_counts()
+        normalised_distribution = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
+        normalised_distribution.to_csv('analyses/dialogue_act_distribution.csv', index=True, header=False)
+        return normalised_distribution
