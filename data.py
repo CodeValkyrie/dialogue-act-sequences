@@ -208,42 +208,6 @@ class Statistics:
         table.to_csv('analyses/average_utterance_length.csv')
         return table
 
-    def get_most_common_bigrams(self, n, speakers, levels):
-        """ Returns and saves the n most common bigrams per level per speaker and their normalised occurance.
-
-            Args:
-                n        = the number of most common bigrams the function must return. If the number is higher than the
-                           total number of bigrams, the total number of bigrams is returned
-                speakers = a list containing one or both of: 'participant', 'interviewer'
-                levels   = a list containing a subset of {1, 2, 3, 4}
-
-            Output:
-                 - ????
-                 - ????
-        """
-        for speaker in speakers:
-            speaker_data = self.data.data[self.data.data['speaker'] == speaker]
-
-            # Initialises a dictionary to count the bigrams per level.
-            level_bigrams = dict()
-            for level in levels:
-                level_bigrams[str(level)] = dict()
-
-            total_bigrams_per_level = np.zeros(4)
-            # Counts the bigrams per level
-            for dialogue_id in self.data.dialogue_ids:
-                level = dialogue_id[0]
-                dialogue_data = speaker_data[speaker_data['dialogue_id'] == dialogue_id]
-                dialogue_DAs = dialogue_data['dialogue_act'].values
-                total_bigrams_per_level[int(level) - 1] += len(dialogue_DAs)
-                for i in range(len(dialogue_DAs)-1):
-                    bigram = (dialogue_DAs[i], dialogue_DAs[i + 1])
-                    if bigram in level_bigrams[level].keys():
-                        level_bigrams[level][bigram] += 1
-                    else:
-                        level_bigrams[level][bigram] = 1
-            return 0
-
     def get_da_distributions(self, speakers, levels):
         """ Saves the distribution of DAs per level per speaker.
 
@@ -277,3 +241,73 @@ class Statistics:
         normalised_distribution = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
         normalised_distribution.to_csv('analyses/dialogue_act_distribution.csv', index=True, header=False)
         return normalised_distribution
+
+    def get_bigram_distribution(self):
+        """ Saves the distributions of ((speaker, DA)|(speaker, DA)) bigrams per level to a csv file.
+
+            Output:
+                 -  A csv file of the name 'analyses/level_'<level>_dialogue_bigram_distribution.csv' for every level
+                    in the data set. The file contains the bigram distribution of two turns.
+        """
+
+        # Changes the annotation of the speakers to T (for 'tutor') and S (for 'student').
+        data = self.data.data
+        data = data.replace({'participant':'S', 'interviewer':'T'})
+
+        # Saves a DataFrame containg the bigram distributions to a csv file for every level.
+        for level in range(1, 5):
+            level_data = data[data['level'] == level]
+            dialogue_ids = sorted(list(set(level_data['dialogue_id'])))
+            number_of_dialogues = len(dialogue_ids)
+            dialogue_dict = dict()
+            dialogue = pd.DataFrame()
+
+            # Takes the average distribution of the bigrams over all the dialogues.
+            for ID in dialogue_ids:
+                dialogue_data = level_data[level_data['dialogue_id'] == ID][['speaker', 'dialogue_act']]
+                dialogue_length = len(dialogue_data.index) - 1
+                start = dialogue_data.index[0]
+                end = start + dialogue_length
+                dialogue_dict[ID] = dict()
+
+                # Extracts and counts the bigrams per dialogue.
+                for i in range(start, end):
+                    speakers = dialogue_data.at[i, 'speaker'] + dialogue_data.at[i + 1, 'speaker']
+                    dialogue_acts = dialogue_data.at[i, 'dialogue_act'] + '|' + dialogue_data.at[i + 1, 'dialogue_act']
+                    bigram = (speakers, dialogue_acts)
+                    if bigram in dialogue_dict[ID].keys():
+                        dialogue_dict[ID][bigram] += 1
+                    else:
+                        dialogue_dict[ID][bigram] = 1
+
+                # For each dialogue, the distribution is loaded into a DataFrame column with the bigrams on the index.
+                dialogue = (pd.DataFrame(dialogue_dict) / dialogue_length)
+
+            # The average distribution over all the dialogues is stored in a new DataFrame for each level.
+            level_dialogue = (dialogue.sum(axis=1, skipna=True) / number_of_dialogues).round(3).sort_index()
+
+            # The average distributions are saved to a csv file.
+            level_dialogue.to_csv('analyses/level_'+ str(level) + '_dialogue_bigram_distribution.csv', header=['%'])
+
+    def get_most_common_bigrams(self, n, levels):
+
+        # Saves the n most common occuring bigrams to a csv file for every level in levels
+        for level in levels:
+
+            # Gets the bigram distributions for the level.
+            data = pd.read_csv('analyses/level_' + str(level) + '_dialogue_bigram_distribution.csv', header=0)
+
+            # Gives the columns practical names.
+            data.columns = ['speakers', 'dialogue_acts', 'distribution']
+
+            # The top ten bigrams are calculated for every speaker bigram pair for the level.
+            speakers = sorted(list(set(data['speakers'])))
+            for speaker_bigram in speakers:
+                bigram_data = data[data['speakers'] == speaker_bigram]
+                bigram_data = bigram_data.sort_values(by='distribution', axis=0, ascending=False)
+                top_n_bigrams = bigram_data[0:n][['dialogue_acts', 'distribution']].set_index('dialogue_acts')
+                top_n_bigrams.columns = [speaker_bigram]
+
+                # The top n bigrams and their distributions are saved to a csv file.
+                filename = '_'.join(['analyses/level', str(level), speaker_bigram, 'top', str(n), 'bigrams.csv'])
+                top_n_bigrams.to_csv(filename)

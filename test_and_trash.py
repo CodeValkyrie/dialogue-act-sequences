@@ -54,3 +54,9 @@ for i in range(self.k):
     else:
         test_samples.append(ids[already_allotted:already_allotted + min_size])
         already_allotted = already_allotted + min_size
+
+    # x, y  = tuple(top_n_bigrams.to_dict('list').values())
+    # top_n_bigrams = dict(zip(x, y))
+    # top_n[speaker_bigram] = top_n_bigrams
+    # print(top_n)
+# top_n_bigrams_per_speaker = pd.DataFrame(top_n)
