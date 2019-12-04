@@ -4,7 +4,7 @@ import torch.nn as nn
 class LSTM(nn.Module):
     """ Recurrent Neural Network (RNN) model"""
 
-    def __init__(self, n_classes, hidden_nodes, n_layers, emb_input_dimensions=[2, 13, 4]):
+    def __init__(self, n_classes, hidden_nodes, n_layers):
         """ Initialises of the RNN
 
             Args:
@@ -14,10 +14,6 @@ class LSTM(nn.Module):
         """
 
         super(LSTM, self).__init__()
-
-        self.speaker_embedding = nn.Embedding(emb_input_dimensions[0], 20)
-        self.DA_embedding = nn.Embedding(emb_input_dimensions[1], 20)
-        self.level_embedding = nn.Embedding(emb_input_dimensions[2], 20)
         self.lstm = nn.LSTM(n_classes, hidden_nodes, n_layers).double()
         self.decoder = nn.Linear(hidden_nodes, n_classes).double()
 

@@ -57,7 +57,7 @@ class DataSet:
             batch = dialogue[:, i:min(i + batch_size, dialogue_length - 1), :]
 
             # The labels of the sequences are just the next labels in the sequence.
-            labels = dialogue[:, (i + 1):min((i + 1) + batch_size, dialogue_length), :]
+            labels = dialogue[:, (i + 1):min((i + 1) + batch_size, dialogue_length), 1]
             batch_tuples.append((torch.from_numpy(batch), torch.from_numpy(labels)))
         return batch_tuples
 
@@ -116,7 +116,18 @@ class Preprocessing:
         for i in range(self.number_of_classes):
             self.class_dict[speaker_DA_tuples[i]] = class_vectors[i]
 
-    def save_dialogues_to_csv(self):
+    def save_dialogues_as_matrices(self, sequence_length=3, classes=['speaker', 'dialogue_act', 'level', 'utterance_length']):
+        """ Stores the matrix representation (sequence_length, number_of_utterances, number_of_classes) of each
+            dialogue in the data set into a separate .pt file.
+
+            Args:
+                sequence_length = the length of the training sequences after which the hidden state is reset.
+                                  Default is 7 to counteract the vanishing gradient problem.
+
+            Output:
+                - Data files in the format 'dialogue<ID>_level<levelint>.pt'
+        """
+        number_of_classes = len(classes)
 
         # Edits the DataFrame for every dialogue and saves the dialogue in a csv file.
         for ID in self.dialogue_ids:
@@ -126,25 +137,38 @@ class Preprocessing:
 
             # Replace the speaker values with their speaker set index.
             for speaker in self.speakers:
-                dialogue_data = dialogue_data.replace({speaker : self.speakers.index(speaker)})
+                dialogue_speakers = dialogue_data['speaker'].replace({speaker: str(self.speakers.index(speaker))})
+                dialogue_data = dialogue_data.assign(speaker=dialogue_speakers)
+
 
             # Replace the level values with their level set index.
             for level in self.levels:
-                dialogue_data = dialogue_data.replace({level: self.levels.index(level)})
+                dialogue_levels = dialogue_data['level'].replace({level: self.levels.index(level)})
+                dialogue_data = dialogue_data.assign(level=dialogue_levels)
 
             # Replace the dialogue act values with their dialogue act set index.
             for DA in self.DAs:
-                dialogue_data = dialogue_data.replace({DA: self.DAs.index(DA)})
+                dialogue_DAs = dialogue_data['dialogue_act'].replace({DA: str(self.DAs.index(DA))})
+                dialogue_data = dialogue_data.assign(dialogue_act=dialogue_DAs)
 
             # Computes the utterance lengths without the punctuation and adds it to the DataFrame.
             utterance_texts = dialogue_data['text'].values
             utterance_lengths = [len(str(utterance).split()) - 1 for utterance in utterance_texts]
             dialogue_data = dialogue_data.assign(utterance_length=utterance_lengths)
 
-            # Saves the dialogue DataFrame to a csv file of the corresponding name.
-            filename = 'data/dialogue-' +  ID + '.csv'
-            dialogue_data[['speaker','dialogue_act','level','text','utterance_length']].to_csv(filename)
+            # Makes a Numpy array out of the DataFrame containing the values for the four classes.
+            dialogue_matrix = dialogue_data[classes].to_numpy().astype(int)
+            dialogue_length = dialogue_matrix.shape[0]
 
+            # Makes a 3D Numpy array of sequences.
+            dialogue_representation = np.array([]).reshape(sequence_length, -1, number_of_classes)
+            for i in range(dialogue_length - (sequence_length - 1)):
+                sequence = dialogue_matrix[i:i + sequence_length, ].reshape(sequence_length, -1, number_of_classes)
+                dialogue_representation = np.concatenate((dialogue_representation, sequence), axis=1)
+
+            # Converts the 3D dialogue sequences matrix to a tensor and saves it in a file.
+            dialogue_tensor = torch.from_numpy(dialogue_representation)
+            torch.save(dialogue_tensor, 'data/dialogue-' + ID + '.pt')
 
 
     def save_dialogues_as_matrices_old(self, sequence_length=7):

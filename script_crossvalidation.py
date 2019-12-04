@@ -42,7 +42,7 @@ for sequence_length in sequence_lengths:
 
     # Preprocesses the data for the sequence length.
     preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-    preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length)
+    preprocessed.save_dialogues_as_matrices_old(sequence_length=sequence_length)
     data = DataSet()
     n_classes = data.get_number_of_classes()
 
