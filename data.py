@@ -99,6 +99,12 @@ class Preprocessing:
         self.DAs = sorted(list(set(self.data['dialogue_act'])))
         self.number_of_DAs = len(self.DAs)
 
+        # Speaker information.
+        self.speakers = sorted(list(set(self.data['speaker'])))
+
+        # Level information.
+        self.levels = sorted(list(set(self.data['level'])))
+
         # Extracts the unique (speaker, DA) dialogue turn tuples from the data set.
         speaker_DA_tuples = self.data[['speaker','dialogue_act']].drop_duplicates().values
         speaker_DA_tuples = [tuple(pair) for pair in speaker_DA_tuples]
@@ -110,7 +116,38 @@ class Preprocessing:
         for i in range(self.number_of_classes):
             self.class_dict[speaker_DA_tuples[i]] = class_vectors[i]
 
-    def save_dialogues_as_matrices(self, sequence_length=7):
+    def save_dialogues_to_csv(self):
+
+        # Edits the DataFrame for every dialogue and saves the dialogue in a csv file.
+        for ID in self.dialogue_ids:
+
+            # Extracts the turn tuples of the dialogue corresponding to the dialogue ID.
+            dialogue_data = self.data[self.data['dialogue_id'] == ID]
+
+            # Replace the speaker values with their speaker set index.
+            for speaker in self.speakers:
+                dialogue_data = dialogue_data.replace({speaker : self.speakers.index(speaker)})
+
+            # Replace the level values with their level set index.
+            for level in self.levels:
+                dialogue_data = dialogue_data.replace({level: self.levels.index(level)})
+
+            # Replace the dialogue act values with their dialogue act set index.
+            for DA in self.DAs:
+                dialogue_data = dialogue_data.replace({DA: self.DAs.index(DA)})
+
+            # Computes the utterance lengths without the punctuation and adds it to the DataFrame.
+            utterance_texts = dialogue_data['text'].values
+            utterance_lengths = [len(str(utterance).split()) - 1 for utterance in utterance_texts]
+            dialogue_data = dialogue_data.assign(utterance_length=utterance_lengths)
+
+            # Saves the dialogue DataFrame to a csv file of the corresponding name.
+            filename = 'data/dialogue-' +  ID + '.csv'
+            dialogue_data[['speaker','dialogue_act','level','text','utterance_length']].to_csv(filename)
+
+
+
+    def save_dialogues_as_matrices_old(self, sequence_length=7):
         """ Stores the matrix representation (sequence_length, number_of_utterances, number_of_classes) of each
             dialogue in the data set into a separate .pt file.
 
@@ -254,7 +291,7 @@ class Statistics:
         data = self.data.data
         data = data.replace({'participant':'S', 'interviewer':'T'})
 
-        # Saves a DataFrame containg the bigram distributions to a csv file for every level.
+        # Saves a DataFrame containing the bigram distributions to a csv file for every level.
         for level in range(1, 5):
             level_data = data[data['level'] == level]
             dialogue_ids = sorted(list(set(level_data['dialogue_id'])))
