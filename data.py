@@ -321,7 +321,6 @@ class Statistics:
             dialogue_ids = sorted(list(set(level_data['dialogue_id'])))
             number_of_dialogues = len(dialogue_ids)
             dialogue_dict = dict()
-            dialogue = pd.DataFrame()
 
             # Takes the average distribution of the bigrams over all the dialogues.
             for ID in dialogue_ids:
@@ -341,11 +340,14 @@ class Statistics:
                     else:
                         dialogue_dict[ID][bigram] = 1
 
-                # For each dialogue, the distribution is loaded into a DataFrame column with the bigrams on the index.
-                dialogue = (pd.DataFrame(dialogue_dict) / dialogue_length)
+                dialogue_dict[ID] = {bigram: count / dialogue_length for bigram, count in dialogue_dict[ID].items()}
 
             # The average distribution over all the dialogues is stored in a new DataFrame for each level.
-            level_dialogue = (dialogue.sum(axis=1, skipna=True) / number_of_dialogues).round(3).sort_index()
+            level_dialogue = pd.DataFrame(dialogue_dict)
+            level_dialogue = (level_dialogue.sum(axis=1, skipna=True) / number_of_dialogues).sort_index()
+
+            # Convert values to percentages.
+            level_dialogue = (level_dialogue * 100).round(2)
 
             # The average distributions are saved to a csv file.
             level_dialogue.to_csv('analyses/level_'+ str(level) + '_dialogue_bigram_distribution.csv', header=['%'])
