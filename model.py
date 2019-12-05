@@ -1,10 +1,11 @@
 import torch.nn as nn
+import torch
 
 
 class LSTM(nn.Module):
     """ Recurrent Neural Network (RNN) model"""
 
-    def __init__(self, n_classes, hidden_nodes, n_layers, emb_input_dimensions=[2, 13, 4]):
+    def __init__(self, input_dimensions=[2, 13, 4], embedding_dimensions=[4, 20, 10] , hidden_nodes=64, n_layers=1, n_classes=13):
         """ Initialises of the RNN
 
             Args:
@@ -15,12 +16,20 @@ class LSTM(nn.Module):
 
         super(LSTM, self).__init__()
 
-        self.speaker_embedding = nn.Embedding(emb_input_dimensions[0], 20)
-        self.DA_embedding = nn.Embedding(emb_input_dimensions[1], 20)
-        self.level_embedding = nn.Embedding(emb_input_dimensions[2], 20)
-        self.lstm = nn.LSTM(n_classes, hidden_nodes, n_layers).double()
-        self.decoder = nn.Linear(hidden_nodes, n_classes).double()
+        # Embed the data classes 'speaker', 'dialogue_act' and 'level'
+        self.speaker_embedding = nn.Embedding(input_dimensions[0], embedding_dimensions[0])
+        self.DA_embedding = nn.Embedding(input_dimensions[1], embedding_dimensions[1])
+        self.level_embedding = nn.Embedding(input_dimensions[2], embedding_dimensions[2])
 
+        # The input is the embedding of the classes + the scalar value of the utterance length.
+        self.input_dimension = sum(embedding_dimensions) + 1
+        self.embedding_dimensions = embedding_dimensions
+
+        # Model.
+        self.lstm = nn.LSTM(self.input_dimension, hidden_nodes, n_layers)
+        self.decoder = nn.Linear(hidden_nodes, n_classes)
+
+        # Some parameters.
         self.hidden_nodes = hidden_nodes
         self.n_layers = n_layers
         self.n_classes = n_classes
@@ -32,6 +41,12 @@ class LSTM(nn.Module):
                 input           = the input data
                 hidden_state    = the hidden state of the RNN storing memory
         """
-        output, hidden = self.lstm(data, hidden_state)
+        data = data.long()
+        emb_speaker = self.speaker_embedding(data[:,:,0]).float()
+        emb_DA = self.DA_embedding(data[:,:,1]).float()
+        emb_level = self.level_embedding(data[:,:,2]).float()
+        utterance_length = data[:, :, 3].unsqueeze(2).float()
+        input = torch.cat((emb_speaker, emb_DA, emb_level, utterance_length), dim=2)
+        output, hidden = self.lstm(input, hidden_state)
         decoded_output = self.decoder(output)
         return decoded_output, hidden

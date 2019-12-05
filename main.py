@@ -18,16 +18,19 @@ def main():
     dataset = DataSet()
 
     # Defines hyperparameters for model initialisation.
-    n_classes = dataset.get_number_of_classes()
+    n_classes = 13
     n_layers = 1
     hidden_nodes = 64
 
-    lstm = LSTM(n_classes, hidden_nodes, n_layers).to(device)
+    input_dimensions = [2, 13, 4]
+    embedding_dimensions = [4, 20, 10]
+
+    lstm = LSTM(input_dimensions, embedding_dimensions, hidden_nodes, n_layers, n_classes).to(device)
 
     # Defines hyperparameters for training initialisation.
     learning_rate = 5e-3
-    batch_size = 16
-    epochs = 10
+    batch_size = 32
+    epochs = 20
     train(lstm, dataset, learning_rate, batch_size, epochs)
     return 0
 
@@ -67,7 +70,7 @@ def train(model, data, learning_rate, batch_size, epochs):
 
                 # The output needs to be transposed to (batch, number_of_classes, sequence_length) for the criterion.
                 # The output can stay 3D but the labels must be 2D, so the following takes the argmax of the labels
-                loss = criterion(output.permute(1, 2, 0), torch.argmax(labels, dim=2).permute(1, 0))
+                loss = criterion(output.permute(1, 2, 0), labels.permute(1, 0).long())
 
                 loss.backward()
 
