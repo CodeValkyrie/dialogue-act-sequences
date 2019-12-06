@@ -23,7 +23,8 @@ from model import LSTM
 
 
 # Analysis parameters.
-sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
+# sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
+sequence_lengths = [3]
 levels = [1, 2, 3, 4]
 k = 10
 
@@ -42,7 +43,7 @@ for sequence_length in sequence_lengths:
 
     # Preprocesses the data for the sequence length.
     preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-    preprocessed.save_dialogues_as_matrices_old(sequence_length=sequence_length)
+    preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length)
     data = DataSet()
     n_classes = data.get_number_of_classes()
 

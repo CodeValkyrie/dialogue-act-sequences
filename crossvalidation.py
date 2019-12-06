@@ -86,8 +86,7 @@ class CrossValidation:
         for i in range(self.k):
 
             # Initialises model.
-
-            model = LSTM(n_classes, hidden_nodes, number_of_layers).to(device)
+            model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=[4, 20, 10] , hidden_nodes=64, n_layers=1, n_classes=13).to(device)
 
             # Trains the model on the training set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.train_ids[i])

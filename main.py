@@ -101,10 +101,12 @@ def evaluate(model, data):
     for dialogue in data:
         batches_labels = data.get_batch_labels(dialogue, batch_size=16)
         for batch, labels in batches_labels:
-            labels = torch.argmax(labels, dim=2).numpy().reshape(-1)
+            labels = labels.numpy().reshape(-1)
             prediction = torch.argmax(predict(model, batch), dim=2).detach().numpy().reshape(-1)
+            print(prediction)
             accuracy_total += accuracy_score(labels, prediction)
             i += 1
+    print('accuracy', accuracy_total / i)
     return accuracy_total / i
 
 
@@ -140,4 +142,4 @@ def generate_sequence(model, input, x):
 
 #####################################################################################
 
-main()
+# main()
