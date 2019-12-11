@@ -278,18 +278,42 @@ class Statistics:
 
             Output:
                  -  Saves a DataFrame containing the dialogue act distributions per level per speaker to
-                    <speaker>_dialogue-act_distributions.csv.
+                    <speaker>_dialogue_act_distributions.csv.
         """
         for speaker in speakers:
             speaker_data = self.data.data[self.data.data['speaker'] == speaker]
+
+            # All the levels' average distributions over the dialogues are stored into the columns of a DataFrame.
             distributions = pd.DataFrame(index=sorted(list(set(speaker_data['dialogue_act']))))
             for level in levels:
                 level_data = speaker_data[speaker_data['level'] == level]
-                distribution = level_data['dialogue_act'].value_counts()
-                nd = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
-                normalised_distribution = pd.DataFrame(nd.values, index=nd.index, columns=['level ' + str(level)])
-                distributions = distributions.merge(normalised_distribution, how='left', left_index=True, right_index=True)
-                distributions.to_csv('analyses/' + speaker + '_dialogue_act_distributions.csv')
+                dialogue_ids = sorted(list(set(level_data['dialogue_id'])))
+                number_of_dialogues = len(dialogue_ids)
+
+                # The average distribution over every dialogue in the given level is stored in a DataFrame.
+                level_distributions = pd.DataFrame(index=sorted(list(set(speaker_data['dialogue_act']))))
+                for ID in dialogue_ids:
+                    dialogue_data = level_data[level_data['dialogue_id'] == ID]
+
+                    # The dialogue acts in the dialogue are counted and then the counts are normalised.
+                    distribution = dialogue_data['dialogue_act'].value_counts()
+                    nd = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
+                    normalised_distribution = pd.DataFrame(nd.values, index=nd.index, columns=[ID])
+
+                    # The normalised counts for the dialogue are added to the level DataFrame.
+                    level_distributions = level_distributions.merge(normalised_distribution, how='left', left_index=True, right_index=True)
+
+                # The average distribution is taken over all the dialogues in the level.
+                level_distributions = (level_distributions.sum(axis=1, skipna=True) / number_of_dialogues).round(3)
+                level_distributions = pd.DataFrame(level_distributions.values, index=level_distributions.index, columns=['level' + str(level)])
+
+                # The average distribution of the level is added to a DataFrame countaining the other levels as well.
+                distributions = distributions.merge(level_distributions, how='left', left_index=True, right_index=True)
+
+            # Saves the dialogue act distributions per level to a .csv file.
+            distributions.to_csv('analyses/' + speaker + '_dialogue_act_distributions.csv', index=True, header=True)
+
+
 
     def get_da_distribution(self):
         """ Returns the DA distribution and saves it to a csv file.

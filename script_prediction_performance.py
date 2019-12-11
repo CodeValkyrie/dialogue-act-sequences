@@ -5,8 +5,8 @@ from crossvalidation import CrossValidation
 from data import DataSet, Preprocessing
 from model import LSTM
 
-
-""" This is a scrpt that performs cross-validation on an lstm model given the different settings below.
+""" This is a script that performs cross-validation on an lstm model given the different settings below and keeps track
+    of the predictions being made.
 
     The variables that need to be specified:
         sequence_lengths    = a list containing different sequence lengths
@@ -14,13 +14,13 @@ from model import LSTM
         k                   = scalar specifying the fold of the cross-validation
         number_of_layers    = scalar specifying the number of layers in the lstm model
         hidden_nodes        = scalar specifying the number of hidden nodes in the LSTM model's layers
+        input_classes       = a list containing the classes that must be used as input
         learning_rate       = scalar specifying the learning rate of the LSTM's training 
         batch_size          = scalar specifying the batch size of the LSTM's training
         epochs              = scalar specifying the number of epochs during the LSTM's training
-        
+
     The script outputs a matrix containing the mean accuracy of the cross-validation per sequence length        
 """
-
 
 # Analysis parameters.
 # sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
