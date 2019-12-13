@@ -48,6 +48,14 @@ for sequence_length in sequence_lengths:
     data = DataSet()
     n_classes = data.get_number_of_classes()
 
+    # This is the shape of the predictions and labels after the folds (44595, 3)
+
+    # (15219, 7)
+    print(preprocessed.data.shape)
+
+    # 45539
+    print(preprocessed.data.shape[0] * 3 - preprocessed.number_of_dialogues)
+
     # Performs cross-validation.
     cross_validation = CrossValidation(data, k)
     cross_validation.make_k_fold_cross_validation_split(levels)

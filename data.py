@@ -159,13 +159,10 @@ class Preprocessing:
             dialogue_data = dialogue_data.assign(utterance_length=utterance_lengths)
 
             # Makes a Numpy array out of the DataFrame containing the values for the four classes.
-            # print(dialogue_data[classes])
             index = dialogue_data[classes].index.to_numpy().reshape(-1, 1)
             dialogue_matrix = dialogue_data[classes].to_numpy().astype(int)
             dialogue_matrix = np.concatenate((dialogue_matrix, index), axis=1)
             dialogue_length = dialogue_matrix.shape[0]
-            # print(dialogue_matrix)
-            # print(dialogue_matrix.shape)
 
 
 

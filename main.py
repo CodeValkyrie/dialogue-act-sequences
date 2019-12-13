@@ -120,7 +120,6 @@ def evaluate(model, data, save_labels_predictions=False):
             predictions = predictions.reshape(-1)
             accuracy_total += accuracy_score(labels, predictions)
             i += 1
-        print(labels_predictions.shape)
     print('accuracy', accuracy_total / i)
     if save_labels_predictions:
         return labels_predictions, accuracy_total / i

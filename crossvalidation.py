@@ -84,7 +84,7 @@ class CrossValidation:
 
         """
         scores = np.empty(self.k)
-        labels_predictions = pd.DataFrame()
+        total_labels_predictions = pd.DataFrame()
         for i in range(self.k):
 
             # Initialises model.
@@ -97,8 +97,12 @@ class CrossValidation:
             # Tests the model on the test set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.test_ids[i])
             if save_labels_predictions:
-                labels_predictions, scores[i] = evaluate(model, self.data, save_labels_predictions)
-                print(pd.DataFrame(labels_predictions))
+                labels_predictions_fold, scores[i] = evaluate(model, self.data, save_labels_predictions)
+                labels_predictions_fold = pd.DataFrame(labels_predictions_fold.reshape(-1, 3))
+                total_labels_predictions = pd.concat([total_labels_predictions, labels_predictions_fold])
+                print(total_labels_predictions.shape)
+                # break
             else:
                 scores[i] = evaluate(model, self.data, save_labels_predictions)
+        print(total_labels_predictions.drop_duplicates().shape)
         return scores
