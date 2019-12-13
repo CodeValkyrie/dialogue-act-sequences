@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch
 from main import train, evaluate
 from model import LSTM
@@ -66,7 +67,7 @@ class CrossValidation:
             self.train_ids = [x + y for x, y in zip(self.train_ids, train_samples)]
             self.test_ids = [x + y for x, y in zip(self.test_ids, test_samples)]
 
-    def validate(self, n_classes, hidden_nodes, number_of_layers, lr, batch_size, epochs, input_classes):
+    def validate(self, n_classes, hidden_nodes, number_of_layers, lr, batch_size, epochs, input_classes, save_labels_predictions=False):
         """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
             set with given training parameters.
 
@@ -83,6 +84,7 @@ class CrossValidation:
 
         """
         scores = np.empty(self.k)
+        labels_predictions = pd.DataFrame()
         for i in range(self.k):
 
             # Initialises model.
@@ -94,5 +96,9 @@ class CrossValidation:
 
             # Tests the model on the test set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.test_ids[i])
-            scores[i] = evaluate(model, self.data)
+            if save_labels_predictions:
+                labels_predictions, scores[i] = evaluate(model, self.data, save_labels_predictions)
+                print(pd.DataFrame(labels_predictions))
+            else:
+                scores[i] = evaluate(model, self.data, save_labels_predictions)
         return scores

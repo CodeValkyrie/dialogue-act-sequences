@@ -44,14 +44,15 @@ for sequence_length in sequence_lengths:
 
     # Preprocesses the data for the sequence length.
     preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-    preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length)
+    preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
     data = DataSet()
     n_classes = data.get_number_of_classes()
 
     # Performs cross-validation.
     cross_validation = CrossValidation(data, k)
     cross_validation.make_k_fold_cross_validation_split(levels)
-    scores = cross_validation.validate(n_classes, hidden_nodes, number_of_layers, learning_rate, batch_size, epochs, input_classes)
+    scores = cross_validation.validate(n_classes, hidden_nodes, number_of_layers, learning_rate, batch_size, epochs,
+                                       input_classes, save_labels_predictions=True)
     entry = np.array([sequence_length, np.mean(scores), np.std(scores)]).reshape(-1, 3)
     output = np.concatenate((output, entry), axis=0)
 

@@ -116,7 +116,7 @@ class Preprocessing:
         for i in range(self.number_of_classes):
             self.class_dict[speaker_DA_tuples[i]] = class_vectors[i]
 
-    def save_dialogues_as_matrices(self, sequence_length=3, classes=['speaker', 'dialogue_act', 'level', 'utterance_length']):
+    def save_dialogues_as_matrices(self, sequence_length=3, classes=['speaker', 'dialogue_act', 'level', 'utterance_length'], store_index=False):
         """ Stores the matrix representation (sequence_length, number_of_utterances, number_of_classes) of each
             dialogue in the data set into a separate .pt file.
 
@@ -128,6 +128,8 @@ class Preprocessing:
                 - Data files in the format 'dialogue<ID>_level<levelint>.pt'
         """
         number_of_classes = len(classes)
+        if store_index:
+            number_of_classes += 1
 
         # Edits the DataFrame for every dialogue and saves the dialogue in a csv file.
         for ID in self.dialogue_ids:
@@ -157,8 +159,15 @@ class Preprocessing:
             dialogue_data = dialogue_data.assign(utterance_length=utterance_lengths)
 
             # Makes a Numpy array out of the DataFrame containing the values for the four classes.
+            # print(dialogue_data[classes])
+            index = dialogue_data[classes].index.to_numpy().reshape(-1, 1)
             dialogue_matrix = dialogue_data[classes].to_numpy().astype(int)
+            dialogue_matrix = np.concatenate((dialogue_matrix, index), axis=1)
             dialogue_length = dialogue_matrix.shape[0]
+            # print(dialogue_matrix)
+            # print(dialogue_matrix.shape)
+
+
 
             # Makes a 3D Numpy array of sequences.
             dialogue_representation = np.array([]).reshape(sequence_length, -1, number_of_classes)

@@ -66,7 +66,7 @@ def train(model, data, learning_rate, batch_size, epochs):
                 optimiser.zero_grad()
                 batch = batch.to(device)
                 labels = labels.to(device)
-                output, hidden = model(batch, None)
+                output, hidden = model(batch[:, :, :4], None)
 
                 # The output needs to be transposed to (batch, number_of_classes, sequence_length) for the criterion.
                 # The output can stay 3D but the labels must be 2D, so the following takes the argmax of the labels
@@ -81,9 +81,10 @@ def train(model, data, learning_rate, batch_size, epochs):
                 total_loss += loss.item()
                 counter += 1
         print(total_loss / counter)
+        break
 
 
-def evaluate(model, data):
+def evaluate(model, data, save_labels_predictions=False):
     """ Returns the prediction evaluation scores precision, recall and F1 of the RNN model
         on a data sequences of length x after 10-fold cross-validation
 
@@ -98,15 +99,31 @@ def evaluate(model, data):
     i = 0
     accuracy_total = 0
     model.eval()
+    labels_predictions = None
     for dialogue in data:
         batches_labels = data.get_batch_labels(dialogue, batch_size=16)
         for batch, labels in batches_labels:
+
+            if labels_predictions is None:
+                labels_predictions = np.empty((batch.shape[0], 0, 3))
+
+            # If the predictions and labels must be stored, stores the labels and predictions with their input's index.
+            if save_labels_predictions:
+                labels_to_store = np.expand_dims(labels, axis=2)
+                index_to_store = np.expand_dims(batch[:, :, 4], axis=2)
+                predictions = np.expand_dims(torch.argmax(predict(model, batch[:, :, :4]), dim=2).detach().numpy(), axis=2)
+                labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions), axis=2)
+                labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=1)
+
+            # Computes the accuracy score.
             labels = labels.numpy().reshape(-1)
-            prediction = torch.argmax(predict(model, batch), dim=2).detach().numpy().reshape(-1)
-            print(prediction)
-            accuracy_total += accuracy_score(labels, prediction)
+            predictions = predictions.reshape(-1)
+            accuracy_total += accuracy_score(labels, predictions)
             i += 1
+        print(labels_predictions.shape)
     print('accuracy', accuracy_total / i)
+    if save_labels_predictions:
+        return labels_predictions, accuracy_total / i
     return accuracy_total / i
 
 
