@@ -67,7 +67,7 @@ class CrossValidation:
             self.train_ids = [x + y for x, y in zip(self.train_ids, train_samples)]
             self.test_ids = [x + y for x, y in zip(self.test_ids, test_samples)]
 
-    def validate(self, n_classes, hidden_nodes, number_of_layers, lr, batch_size, epochs, input_classes, save_labels_predictions=False):
+    def validate(self, lr, batch_size, epochs, input_classes, save_labels_predictions=False):
         """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
             set with given training parameters.
 
@@ -100,9 +100,8 @@ class CrossValidation:
                 labels_predictions_fold, scores[i] = evaluate(model, self.data, save_labels_predictions)
                 labels_predictions_fold = pd.DataFrame(labels_predictions_fold.reshape(-1, 3))
                 total_labels_predictions = pd.concat([total_labels_predictions, labels_predictions_fold])
-                print(total_labels_predictions.shape)
-                # break
             else:
                 scores[i] = evaluate(model, self.data, save_labels_predictions)
-        print(total_labels_predictions.drop_duplicates().shape)
+        if save_labels_predictions:
+            return total_labels_predictions, scores
         return scores

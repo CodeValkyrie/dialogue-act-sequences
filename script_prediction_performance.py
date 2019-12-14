@@ -27,11 +27,12 @@ from model import LSTM
 sequence_lengths = [3]
 levels = [1, 2, 3, 4]
 k = 10
+weighted = 'unweighted'
 
 # Model hyper parameters.
 number_of_layers = 1
 hidden_nodes = 64
-input_classes = ['speaker', 'dialogue_act', 'level', 'utterance_length']
+input_classes = ['dialogue_act', 'speaker', 'level', 'utterance_length']
 
 # Training hyper parameters.
 learning_rate = 5e-3
@@ -45,25 +46,37 @@ for sequence_length in sequence_lengths:
     # Preprocesses the data for the sequence length.
     preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
     preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
+    data_frame = preprocessed.data
     data = DataSet()
-    n_classes = data.get_number_of_classes()
 
-    # This is the shape of the predictions and labels after the folds (44595, 3)
-
-    # (15219, 7)
-    print(preprocessed.data.shape)
-
-    # 45539
-    print(preprocessed.data.shape[0] * 3 - preprocessed.number_of_dialogues)
-
-    # Performs cross-validation.
+    # Initialise cross validator.
     cross_validation = CrossValidation(data, k)
     cross_validation.make_k_fold_cross_validation_split(levels)
-    scores = cross_validation.validate(n_classes, hidden_nodes, number_of_layers, learning_rate, batch_size, epochs,
-                                       input_classes, save_labels_predictions=True)
-    entry = np.array([sequence_length, np.mean(scores), np.std(scores)]).reshape(-1, 3)
-    output = np.concatenate((output, entry), axis=0)
 
-# Makes a pandas DataFrame to output to a .csv file.
-data = pd.DataFrame(output, columns=['sequence length', 'accuracy', 'SD'])
-data.to_csv('analyses/accuracy_per_sequence_length.csv', index=None, header=True)
+    # Performs cross validation on different subsets of classes as input parameters.
+    for subsection in range(len(input_classes)):
+        classes = input_classes[:subsection + 1]
+        input = '_'.join([c[0] for c in classes])
+        print("Cross-validation for input {}".format(classes))
+
+        # Performs cross-validation.
+        labels_predictions, scores = cross_validation.validate(learning_rate, batch_size, epochs,
+                                                               classes, save_labels_predictions=True)
+
+        # Stores the labels and predictions in a DataFrame.
+        input_frame = pd.DataFrame(labels_predictions)
+        columns = input_frame.columns
+        input_frame = input_frame.set_index(columns[0]).rename_axis(None)
+        input_frame = input_frame.rename(columns={columns[1]: 'labels_' + input, columns[2]: 'predictions_' + input})
+        input_frame = input_frame.astype(str)
+
+        # Replaces all the numerical values of the labels and predictions with their name.
+        DAs = preprocessed.DAs
+        for i in range(len(DAs)):
+            input_frame = input_frame.replace({str(i) + '.0': DAs[i]})
+
+        # Adds the labels and predictions for this input as columns to the original data in one DataFrame.
+        data_frame = data_frame.merge(input_frame, how='left', left_index=True, right_index=True)
+
+    # Saves the DataFrame containing all the labels and predictions for the different input settings.
+    data_frame.to_csv('analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + '_predictions.csv')

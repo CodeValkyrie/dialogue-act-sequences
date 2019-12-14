@@ -60,3 +60,52 @@ for i in range(self.k):
     # top_n[speaker_bigram] = top_n_bigrams
     # print(top_n)
 # top_n_bigrams_per_speaker = pd.DataFrame(top_n)
+
+def evaluate(model, data, save_labels_predictions=False):
+    """ Returns the prediction evaluation scores precision, recall and F1 of the RNN model
+        on a data sequences of length x after 10-fold cross-validation
+
+        Args:
+            model                      = RNN model to be evaluated
+            data                       = data on which the RNN is evaluated
+            labels                     = the labels of the data
+
+        Returns:
+            (Precision, recall, F1)    = a tuple containing the scores of the precision, recall and F1 measures
+    """
+    i = 0
+    accuracy_total = 0
+    model.eval()
+    labels_predictions = None
+    for dialogue in data:
+        batches_labels = data.get_batch_labels(dialogue, batch_size=16)
+        for batch, labels in batches_labels:
+
+            if labels_predictions is None:
+                labels_predictions = np.empty((batch.shape[0], 0, 3))
+
+            # If the predictions and labels must be stored, stores the labels and predictions with their input's index.
+            if save_labels_predictions:
+                labels_to_store = np.expand_dims(labels, axis=2)
+                index_to_store = np.expand_dims(batch[:, :, 4], axis=2)
+                predictions = np.expand_dims(torch.argmax(predict(model, batch[:, :, :4]), dim=2).detach().numpy(), axis=2)
+                labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions), axis=2)
+                labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=1)
+
+            # Computes the accuracy score.
+            labels = labels.numpy().reshape(-1)
+            predictions = predictions.reshape(-1)
+            accuracy_total += accuracy_score(labels, predictions)
+            i += 1
+    print('accuracy', accuracy_total / i)
+    if save_labels_predictions:
+        return labels_predictions, accuracy_total / i
+    return accuracy_total / i
+
+# This is the shape of the predictions and labels after the folds (44595, 3)
+
+    # (15219, 7)
+    # print(preprocessed.data.shape)
+
+    # 45539
+    # print(preprocessed.data.shape[0] * 3 - preprocessed.number_of_dialogues)

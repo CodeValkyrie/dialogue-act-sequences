@@ -313,7 +313,7 @@ class Statistics:
                 level_distributions = (level_distributions.sum(axis=1, skipna=True) / number_of_dialogues).round(3)
                 level_distributions = pd.DataFrame(level_distributions.values, index=level_distributions.index, columns=['level' + str(level)])
 
-                # The average distribution of the level is added to a DataFrame countaining the other levels as well.
+                # The average distribution of the level is added to a DataFrame containing the other levels as well.
                 distributions = distributions.merge(level_distributions, how='left', left_index=True, right_index=True)
 
             # Saves the dialogue act distributions per level to a .csv file.

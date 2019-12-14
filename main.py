@@ -80,8 +80,7 @@ def train(model, data, learning_rate, batch_size, epochs):
                 optimiser.step()
                 total_loss += loss.item()
                 counter += 1
-        print(total_loss / counter)
-        break
+        print('loss', total_loss / counter)
 
 
 def evaluate(model, data, save_labels_predictions=False):
@@ -105,15 +104,18 @@ def evaluate(model, data, save_labels_predictions=False):
         for batch, labels in batches_labels:
 
             if labels_predictions is None:
-                labels_predictions = np.empty((batch.shape[0], 0, 3))
+                labels_predictions = np.empty((0, 3))
 
             # If the predictions and labels must be stored, stores the labels and predictions with their input's index.
             if save_labels_predictions:
-                labels_to_store = np.expand_dims(labels, axis=2)
-                index_to_store = np.expand_dims(batch[:, :, 4], axis=2)
-                predictions = np.expand_dims(torch.argmax(predict(model, batch[:, :, :4]), dim=2).detach().numpy(), axis=2)
-                labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions), axis=2)
-                labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=1)
+
+                # Only stores the last labels and predictions in a sequence because these are the most fine-tuned.
+                labels_to_store = np.expand_dims(labels[-1], axis=1)
+                index_to_store = np.expand_dims(batch[-1, :, 4], axis=1)
+                predictions = torch.argmax(predict(model, batch[:, :, :4]), dim=2).detach().numpy()
+                predictions_to_store = np.expand_dims(predictions[-1, :], axis=1)
+                labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions_to_store), axis=1)
+                labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=0)
 
             # Computes the accuracy score.
             labels = labels.numpy().reshape(-1)
