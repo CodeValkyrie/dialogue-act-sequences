@@ -404,3 +404,48 @@ class Statistics:
                 # The top n bigrams and their distributions are saved to a csv file.
                 filename = '_'.join(['analyses/level', str(level), speaker_bigram, 'top', str(n), 'bigrams.csv'])
                 top_n_bigrams.to_csv(filename)
+
+    def precision_recall_f1(self, data, columns, dialogue_act):
+        """ Returns the precision, recall and f1-score for a dialogue act given a label and a prediction column in a
+            DataFrame.
+
+            Args:
+                data            = a DataFrame consisting of columns containing predictions and labels
+                column_names    = the columns in the DataFrame over which the precision and recall must be calculated
+                dialogue_act    = the dialogue act for which the prediction, recall and must be calculated.
+       """
+
+        # True positive:    label == DA && prediction == DA
+        # False positive:   label != DA && prediction == DA
+        # False negative:   label == DA && prediction != DA
+        # True negative:    label != DA && prediction != DA
+
+        data_columns = data[columns]
+        labels = columns[0]
+        predictions = columns[1]
+
+        # Computes the precision.
+        predictions_of_da = data_columns[data_columns[predictions] == dialogue_act]
+        true_positives = len(predictions_of_da[predictions_of_da[labels] == dialogue_act])
+
+        # The number of the predictions of the dialogue act is the true positives and false positives combined.
+        predictions_of_da = len(predictions_of_da)
+
+        # If the number of predictions as the dialogue act is 0, the precision is set to 0.
+        precision = 0
+        if predictions_of_da != 0:
+            precision = true_positives / predictions_of_da
+
+        # Computes the recall.
+        # The number of the labels of the dialogue act is the true positives and false negatives combined.
+        labels_of_da = len(data_columns[data_columns[labels] == dialogue_act])
+
+        # If the number of labels as the dialogue act is 0, the recall is set to 0.
+        recall = true_positives / labels_of_da
+
+        # If both the precision and the recall are 0, the f1-score is set to zero as well.
+        f1 = 0
+        if precision != 0 or recall != 0:
+            f1 = 2 * (precision * recall) / (precision + recall)
+
+        return precision, recall, f1
