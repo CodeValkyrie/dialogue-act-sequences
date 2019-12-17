@@ -1,8 +1,9 @@
-import torch
 import pandas as pd
 import numpy as np
-from crossvalidation import CrossValidation
 from data import Preprocessing, Statistics
+import matplotlib.pyplot as plt
+
+plt.rcParams['xtick.labelsize'] = 6
 
 weighted = 'unweighted'
 sequence_lengths = [3]
@@ -47,12 +48,12 @@ for sequence_length in sequence_lengths:
                     accuracy_dict['level_' + str(level)]['f1'] = dict()
 
         # Code below adapted from https://stackoverflow.com/questions/13575090/construct-pandas-dataframe-from-items-in-nested-dictionary
-        user_ids = []
+        level_accuracies = []
         frames = []
 
-        for user_id, d in accuracy_dict.items():
-            user_ids.append(user_id)
-            frames.append(pd.DataFrame.from_dict(d, orient='index'))
+        for level_accuracy, accuracy_scores in accuracy_dict.items():
+            level_accuracies.append(level_accuracy)
+            frames.append(pd.DataFrame.from_dict(accuracy_scores, orient='index'))
 
         # Stores all the accuracy scores for all the levels over all the dialogue acts into a DataFrame.
         accuracies = pd.concat(frames, keys=user_ids).T.round(4)

@@ -449,3 +449,19 @@ class Statistics:
             f1 = 2 * (precision * recall) / (precision + recall)
 
         return precision, recall, f1
+
+    def get_normalised_confusion_matrix(self, data, columns):
+        """ Returns the distribution of predictions (columns) belonging to a dialogue act (rows)
+
+            Args:
+                data            = a DataFrame consisting of columns containing predictions and labels
+                column_names    = the columns in the DataFrame over which the precision and recall must be calculated
+
+            Returns:
+                A Dataframe containing the dialogue labels on the rows and the prediction distribution over the
+                dialogue acts on the columns.
+        """
+        labels = columns[0]
+        predictions = columns[1]
+        confusion_matrix = pd.crosstab(data[labels], data[predictions])
+        return confusion_matrix.div(confusion_matrix.sum(axis=1), axis=0)
