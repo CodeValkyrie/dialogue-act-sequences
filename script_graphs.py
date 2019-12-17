@@ -1,14 +1,40 @@
 import pandas as pd
 import numpy as np
-from data import Preprocessing, Statistics
 import matplotlib.pyplot as plt
+from data import Preprocessing, Statistics
 
+
+""" This is a script that plots the f1-scores per dialogue act given different input settings and sequence lengths. 
+    The data is read in from .csv files containing the accuracy scores of different models and input settings.
+
+    The variables that need to be specified:
+        weighted           = chosen from {"weighted", "unweighted"} to specify which model's predictions are to be used.
+        sequence_lengths   = the sequence length with which the model made the predictions.
+        input_settings     = a list containing the input settings used: a subset from 
+                             {'dialogue act', 'speaker', 'level', 'utterance length'}. The list must consist of 
+                             abbreviations in the format '_<first letter>', for example ['_d', '_d_u'], which uses first 
+                             only dialogue acts and then dialogue acts and utterance lengths.
+        colors             = a list containing the colors of the bars in the graphs that correspond to the 
+                             input settings. 
+
+    The script outputs png plots containing the f1-scores of the dialogue acts per input setting.       
+"""
+
+# Sets the font size of the plot labels.
 plt.rcParams['xtick.labelsize'] = 6
 
 weighted = 'unweighted'
 sequence_lengths = [3]
 input_settings = ['_d', '_d_s', '_d_s_l', '_d_s_l_u']
 colors = ['b', 'r', 'y', 'g']
+
+# Initialises variables to be defined later.
+names = []
+x = []
+
+preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
+statistics = Statistics(preprocessed)
+da_sorted_by_occurance = list(statistics.get_da_distribution().index)
 
 for sequence_length in sequence_lengths:
 
@@ -19,8 +45,12 @@ for sequence_length in sequence_lengths:
     for input_setting in input_settings:
 
         # Loads in the data for the plots.
-        filename = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + input_setting + '_accuracy.csv'
+        filename = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + input_setting + \
+                   '_accuracy.csv'
         accuracies = pd.read_csv(filename, index_col=[0], header=[0, 1])
+
+        # Sort the accuracies by the overall occurance ratio of the classes.
+        accuracies = accuracies.reindex(index=da_sorted_by_occurance)
 
         # Gets the correct labels and coordinates for the x-axis.
         names = list(accuracies.index)
@@ -49,5 +79,6 @@ for sequence_length in sequence_lengths:
     ax.legend()
 
     # Saves the plot to a file.
-    figure_file = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + '_histogram_per_setting.png'
+    figure_file = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + \
+                  '_histogram_per_setting.png'
     plt.savefig(figure_file)

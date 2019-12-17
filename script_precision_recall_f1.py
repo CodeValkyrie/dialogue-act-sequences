@@ -1,9 +1,22 @@
 import pandas as pd
-import numpy as np
 from data import Preprocessing, Statistics
-import matplotlib.pyplot as plt
 
-plt.rcParams['xtick.labelsize'] = 6
+
+""" This is a script that stores the prediction performance accuracy scores per dialogue act given different input 
+    settings and sequence lengths. The data is read in from .csv files containing the predictions of different models 
+    and input settings.
+
+    The variables that need to be specified:
+        weighted           = chosen from {"weighted", "unweighted"} to specify which model's predictions are to be used.
+        sequence_lengths   = the sequence length with which the model made the predictions.
+        input_settings     = the input settings used: a subset from 
+                             {'dialogue act', 'speaker', 'level', 'utterance length'}. The list must consist of 
+                             abbreviations in the format '_<first letter>', for example ['_d', '_d_u'], which uses first 
+                             only dialogue acts and then dialogue acts and utterance lengths.
+
+    The script outputs csv files containing the accuracy scores of the dialogue acts (rows) per level and accuracy 
+    metric (columns).       
+"""
 
 weighted = 'unweighted'
 sequence_lengths = [3]
@@ -48,16 +61,17 @@ for sequence_length in sequence_lengths:
                     accuracy_dict['level_' + str(level)]['f1'] = dict()
 
         # Code below adapted from https://stackoverflow.com/questions/13575090/construct-pandas-dataframe-from-items-in-nested-dictionary
+        # Prepares the separate parts of the dictionary to be stored in one DataFrame.
         level_accuracies = []
         frames = []
-
         for level_accuracy, accuracy_scores in accuracy_dict.items():
             level_accuracies.append(level_accuracy)
             frames.append(pd.DataFrame.from_dict(accuracy_scores, orient='index'))
 
         # Stores all the accuracy scores for all the levels over all the dialogue acts into a DataFrame.
-        accuracies = pd.concat(frames, keys=user_ids).T.round(4)
+        accuracies = pd.concat(frames, keys=level_accuracies).T.round(4)
 
         # Saves the accuracy DataFrame to a .csv file.
-        accuracy_file = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + input_setting + '_accuracy.csv'
+        accuracy_file = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + input_setting + \
+                        '_accuracy.csv'
         accuracies.to_csv(accuracy_file)

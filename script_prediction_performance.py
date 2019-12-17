@@ -1,9 +1,8 @@
-import torch
 import pandas as pd
 import numpy as np
 from crossvalidation import CrossValidation
 from data import DataSet, Preprocessing
-from model import LSTM
+
 
 """ This is a script that performs cross-validation on an lstm model given the different settings below and keeps track
     of the predictions being made.
@@ -56,7 +55,7 @@ for sequence_length in sequence_lengths:
     # Performs cross validation on different subsets of classes as input parameters.
     for subsection in range(len(input_classes)):
         classes = input_classes[:subsection + 1]
-        input = '_'.join([c[0] for c in classes])
+        input_short = '_'.join([c[0] for c in classes])
         print("Cross-validation for input {}".format(classes))
 
         # Performs cross-validation.
@@ -67,7 +66,8 @@ for sequence_length in sequence_lengths:
         input_frame = pd.DataFrame(labels_predictions)
         columns = input_frame.columns
         input_frame = input_frame.set_index(columns[0]).rename_axis(None)
-        input_frame = input_frame.rename(columns={columns[1]: 'labels_' + input, columns[2]: 'predictions_' + input})
+        input_frame = input_frame.rename(columns={columns[1]: 'labels_' + input_short, columns[2]: 'predictions_' +
+                                         input_short})
         input_frame = input_frame.astype(str)
 
         # Replaces all the numerical values of the labels and predictions with their name.

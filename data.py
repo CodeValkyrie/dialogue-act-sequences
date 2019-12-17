@@ -19,8 +19,8 @@ class DataSet:
 
     def __getitem__(self, index):
         """ Generates the matrix representation of the dialogue with the given index. """
-        id = self.dialogue_ids[index]
-        return torch.load('data/dialogue-' + id + '.pt')
+        matrix_id = self.dialogue_ids[index]
+        return torch.load('data/dialogue-' + matrix_id + '.pt')
 
     def __load_dialogue_ids(self, filename):
         """ Loads and returns the list of unique dialogue IDs of the data set from filename. """
@@ -32,7 +32,7 @@ class DataSet:
             from filename. """
 
         # Reads in the reverse dictionary from the given file.
-        with open('data/class_vectors.txt') as file:
+        with open(filename) as file:
             return json.load(file)
 
     def get_batch_labels(self, dialogue, batch_size=16):
@@ -106,17 +106,18 @@ class Preprocessing:
         self.levels = sorted(list(set(self.data['level'])))
 
         # Extracts the unique (speaker, DA) dialogue turn tuples from the data set.
-        speaker_DA_tuples = self.data[['speaker','dialogue_act']].drop_duplicates().values
-        speaker_DA_tuples = [tuple(pair) for pair in speaker_DA_tuples]
+        speaker_da_tuples = self.data[['speaker', 'dialogue_act']].drop_duplicates().values
+        speaker_da_tuples = [tuple(pair) for pair in speaker_da_tuples]
 
         # Constructs a dictionary consisting of the unique turn tuples and their corresponding vector representation.
-        self.number_of_classes = len(speaker_DA_tuples)
+        self.number_of_classes = len(speaker_da_tuples)
         self.class_dict = dict()
         class_vectors = np.identity(self.number_of_classes)
         for i in range(self.number_of_classes):
-            self.class_dict[speaker_DA_tuples[i]] = class_vectors[i]
+            self.class_dict[speaker_da_tuples[i]] = class_vectors[i]
 
-    def save_dialogues_as_matrices(self, sequence_length=3, classes=['speaker', 'dialogue_act', 'level', 'utterance_length'], store_index=False):
+    def save_dialogues_as_matrices(self, sequence_length=3,
+                                   classes=['speaker', 'dialogue_act', 'level', 'utterance_length'], store_index=False):
         """ Stores the matrix representation (sequence_length, number_of_utterances, number_of_classes) of each
             dialogue in the data set into a separate .pt file.
 
@@ -142,7 +143,6 @@ class Preprocessing:
                 dialogue_speakers = dialogue_data['speaker'].replace({speaker: str(self.speakers.index(speaker))})
                 dialogue_data = dialogue_data.assign(speaker=dialogue_speakers)
 
-
             # Replace the level values with their level set index.
             for level in self.levels:
                 dialogue_levels = dialogue_data['level'].replace({level: self.levels.index(level)})
@@ -150,8 +150,8 @@ class Preprocessing:
 
             # Replace the dialogue act values with their dialogue act set index.
             for DA in self.DAs:
-                dialogue_DAs = dialogue_data['dialogue_act'].replace({DA: str(self.DAs.index(DA))})
-                dialogue_data = dialogue_data.assign(dialogue_act=dialogue_DAs)
+                dialogue_das = dialogue_data['dialogue_act'].replace({DA: str(self.DAs.index(DA))})
+                dialogue_data = dialogue_data.assign(dialogue_act=dialogue_das)
 
             # Computes the utterance lengths without the punctuation and adds it to the DataFrame.
             utterance_texts = dialogue_data['text'].values
@@ -164,8 +164,6 @@ class Preprocessing:
             dialogue_matrix = np.concatenate((dialogue_matrix, index), axis=1)
             dialogue_length = dialogue_matrix.shape[0]
 
-
-
             # Makes a 3D Numpy array of sequences.
             dialogue_representation = np.array([]).reshape(sequence_length, -1, number_of_classes)
             for i in range(dialogue_length - (sequence_length - 1)):
@@ -175,7 +173,6 @@ class Preprocessing:
             # Converts the 3D dialogue sequences matrix to a tensor and saves it in a file.
             dialogue_tensor = torch.from_numpy(dialogue_representation)
             torch.save(dialogue_tensor, 'data/dialogue-' + ID + '.pt')
-
 
     def save_dialogues_as_matrices_old(self, sequence_length=7):
         """ Stores the matrix representation (sequence_length, number_of_utterances, number_of_classes) of each
@@ -210,9 +207,9 @@ class Preprocessing:
 
             # Converts the 3D dialogue sequences matrix to a tensor and saves it in a file.
             dialogue_tensor = torch.from_numpy(dialogue_representation)
-            torch.save(dialogue_tensor, 'data/dialogue-' +  ID + '.pt')
+            torch.save(dialogue_tensor, 'data/dialogue-' + ID + '.pt')
 
-    def save_dialogue_IDs(self):
+    def save_dialogue_ids(self):
         """ Returns and stores the list of unique dialogue IDs of the data set in a file named dialogue_ids.txt. """
         with open("data/dialogue_ids.txt", "w") as file:
             for ID in self.dialogue_ids:
@@ -229,7 +226,7 @@ class Preprocessing:
             json.dump(class_dict, file)
         return class_dict
 
-    def get_DAs(self):
+    def get_dialogue_acts(self):
         """ Returns a list containing the unique Dialogue Acts of the data set. """
         return self.DAs
 
@@ -269,8 +266,9 @@ class Statistics:
 
                 # Computing the utterance lengths without the punctuation
                 utterance_lengths = [len(str(utterance).split()) - 1 for utterance in utterance_texts]
-                l = 'level ' + str(level)
-                average_utterance_length[speaker][l] = float(round(sum(utterance_lengths) / len(utterance_lengths), 2))
+                level_name = 'level ' + str(level)
+                average_utterance_length[speaker][level_name] = float(round(sum(utterance_lengths) /
+                                                                            len(utterance_lengths), 2))
         table = pd.DataFrame(average_utterance_length)
         table.to_csv('analyses/average_utterance_length.csv')
         return table
@@ -307,19 +305,19 @@ class Statistics:
                     normalised_distribution = pd.DataFrame(nd.values, index=nd.index, columns=[ID])
 
                     # The normalised counts for the dialogue are added to the level DataFrame.
-                    level_distributions = level_distributions.merge(normalised_distribution, how='left', left_index=True, right_index=True)
+                    level_distributions = level_distributions.merge(normalised_distribution, how='left',
+                                                                    left_index=True, right_index=True)
 
                 # The average distribution is taken over all the dialogues in the level.
                 level_distributions = (level_distributions.sum(axis=1, skipna=True) / number_of_dialogues).round(3)
-                level_distributions = pd.DataFrame(level_distributions.values, index=level_distributions.index, columns=['level' + str(level)])
+                level_distributions = pd.DataFrame(level_distributions.values, index=level_distributions.index,
+                                                   columns=['level' + str(level)])
 
                 # The average distribution of the level is added to a DataFrame containing the other levels as well.
                 distributions = distributions.merge(level_distributions, how='left', left_index=True, right_index=True)
 
             # Saves the dialogue act distributions per level to a .csv file.
             distributions.to_csv('analyses/' + speaker + '_dialogue_act_distributions.csv', index=True, header=True)
-
-
 
     def get_da_distribution(self):
         """ Returns the DA distribution and saves it to a csv file.
@@ -343,7 +341,7 @@ class Statistics:
 
         # Changes the annotation of the speakers to T (for 'tutor') and S (for 'student').
         data = self.data.data
-        data = data.replace({'participant':'S', 'interviewer':'T'})
+        data = data.replace({'participant': 'S', 'interviewer': 'T'})
 
         # Saves a DataFrame containing the bigram distributions to a csv file for every level.
         for level in range(1, 5):
@@ -380,7 +378,7 @@ class Statistics:
             level_dialogue = (level_dialogue * 100).round(2)
 
             # The average distributions are saved to a csv file.
-            level_dialogue.to_csv('analyses/level_'+ str(level) + '_dialogue_bigram_distribution.csv', header=['%'])
+            level_dialogue.to_csv('analyses/level_' + str(level) + '_dialogue_bigram_distribution.csv', header=['%'])
 
     def get_most_common_bigrams(self, n, levels):
 
