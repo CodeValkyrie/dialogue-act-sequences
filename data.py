@@ -230,6 +230,25 @@ class Preprocessing:
         """ Returns a list containing the unique Dialogue Acts of the data set. """
         return self.DAs
 
+    def add_baseline(self, baseline):
+        label_indices = list(self.data[self.data['labels_d'].notnull()]['labels_d'].index)
+        number_labels = len(label_indices)
+        if baseline == 'majority_class':
+            majority_class = pd.DataFrame(['statement'] * number_labels, index=label_indices, columns=[baseline])
+            self.data = self.data.merge(majority_class, how='left', left_index=True, right_index=True)
+        elif baseline == 'random':
+            random_class = np.random.randint(13, size=number_labels)
+            random_class = [self.DAs[random] for random in random_class]
+            random_class = pd.DataFrame(random_class, index=label_indices, columns=[baseline])
+            self.data = self.data.merge(random_class, how='left', left_index=True, right_index=True)
+        elif baseline == 'weighted_random':
+            distribution = self.data['dialogue_act'].value_counts()
+            normalised_distribution = (distribution / distribution.sum(axis=0, skipna=True))
+            dialogue_acts = list(normalised_distribution.index)
+            da_distribution = normalised_distribution.to_numpy().flatten()
+            weighted_random = np.random.choice(dialogue_acts, number_labels, p=da_distribution)
+            weighted_random = pd.DataFrame(weighted_random, index=label_indices, columns=[baseline])
+            self.data = self.data.merge(weighted_random, how='left', left_index=True, right_index=True)
 
 class Statistics:
 
