@@ -79,4 +79,4 @@ for sequence_length in sequence_lengths:
         data_frame = data_frame.merge(input_frame, how='left', left_index=True, right_index=True)
 
     # Saves the DataFrame containing all the labels and predictions for the different input settings.
-    # data_frame.to_csv('analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + '_predictions.csv')
+    data_frame.to_csv('analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + '_predictions.csv')

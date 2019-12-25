@@ -52,7 +52,7 @@ def train(model, data, learning_rate, batch_size, epochs, weighted='unweighted')
         epochs          = the number of times the RNN trains on the same data points
     """
     criterion = nn.CrossEntropyLoss()
-    
+
     # Initialises the CrossEntropyLoss with weights for each class according to the distribution.
     if weighted == 'weighted':
         distribution = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None).sort_index()
