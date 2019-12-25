@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
+import pandas as pd
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from model import LSTM
 from data import DataSet
@@ -39,7 +40,7 @@ def main():
 ###################################################################################
 
 
-def train(model, data, learning_rate, batch_size, epochs):
+def train(model, data, learning_rate, batch_size, epochs, weighted='unweighted'):
     """ Trains a given RNN model on a given preprocessed data set with a specified learning rate,
         batch size and number of epochs.
 
@@ -51,6 +52,12 @@ def train(model, data, learning_rate, batch_size, epochs):
         epochs          = the number of times the RNN trains on the same data points
     """
     criterion = nn.CrossEntropyLoss()
+    
+    # Initialises the CrossEntropyLoss with weights for each class according to the distribution.
+    if weighted == 'weighted':
+        distribution = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None).sort_index()
+        distribution = distribution.max() / distribution
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor(distribution.to_numpy().flatten()).float())
 
     # ADJUST FOR OTHER OPTIMISERS
     optimiser = optim.RMSprop(model.parameters(), lr=learning_rate)

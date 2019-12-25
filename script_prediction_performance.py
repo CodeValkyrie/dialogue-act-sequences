@@ -26,7 +26,7 @@ from data import DataSet, Preprocessing
 sequence_lengths = [3]
 levels = [1, 2, 3, 4]
 k = 10
-weighted = 'unweighted'
+weighted = 'weighted'
 
 # Model hyper parameters.
 number_of_layers = 1
@@ -60,7 +60,7 @@ for sequence_length in sequence_lengths:
 
         # Performs cross-validation.
         labels_predictions, scores = cross_validation.validate(learning_rate, batch_size, epochs,
-                                                               classes, save_labels_predictions=True)
+                                                               classes, save_labels_predictions=True, weighted=weighted)
 
         # Stores the labels and predictions in a DataFrame.
         input_frame = pd.DataFrame(labels_predictions)
@@ -79,4 +79,4 @@ for sequence_length in sequence_lengths:
         data_frame = data_frame.merge(input_frame, how='left', left_index=True, right_index=True)
 
     # Saves the DataFrame containing all the labels and predictions for the different input settings.
-    data_frame.to_csv('analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + '_predictions.csv')
+    # data_frame.to_csv('analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + '_predictions.csv')

@@ -67,7 +67,7 @@ class CrossValidation:
             self.train_ids = [x + y for x, y in zip(self.train_ids, train_samples)]
             self.test_ids = [x + y for x, y in zip(self.test_ids, test_samples)]
 
-    def validate(self, lr, batch_size, epochs, input_classes, save_labels_predictions=False):
+    def validate(self, lr, batch_size, epochs, input_classes, save_labels_predictions=False, weighted='unweighted'):
         """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
             set with given training parameters.
 
@@ -92,7 +92,7 @@ class CrossValidation:
 
             # Trains the model on the training set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.train_ids[i])
-            train(model, self.data, lr, batch_size, epochs)
+            train(model, self.data, lr, batch_size, epochs, weighted)
 
             # Tests the model on the test set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.test_ids[i])

@@ -161,7 +161,12 @@ class Preprocessing:
             # Makes a Numpy array out of the DataFrame containing the values for the four classes.
             index = dialogue_data[classes].index.to_numpy().reshape(-1, 1)
             dialogue_matrix = dialogue_data[classes].to_numpy().astype(int)
-            dialogue_matrix = np.concatenate((dialogue_matrix, index), axis=1)
+
+            # Stores the index of the inputs in the original data frame.
+            if store_index:
+                dialogue_matrix = np.concatenate((dialogue_matrix, index), axis=1)
+
+            # Computes the dialogue length.
             dialogue_length = dialogue_matrix.shape[0]
 
             # Makes a 3D Numpy array of sequences.
@@ -347,8 +352,9 @@ class Statistics:
         """
         distribution = self.data.data['dialogue_act'].value_counts()
         normalised_distribution = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
+        normalised_distribution = normalised_distribution.sort_values(ascending=False)
         normalised_distribution.to_csv('analyses/dialogue_act_distribution.csv', index=True, header=False)
-        return normalised_distribution
+        return normalised_distribution.sort_index()
 
     def get_bigram_distribution(self):
         """ Saves the distributions of ((speaker, DA)|(speaker, DA)) bigrams per level to a csv file.
