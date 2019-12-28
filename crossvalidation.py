@@ -123,7 +123,6 @@ class CrossValidation:
                 data frame.
 
         """
-        scores = np.empty(self.k)
         total_labels_predictions = pd.DataFrame()
         for i in range(self.k):
 
@@ -131,7 +130,6 @@ class CrossValidation:
             model = train_n_gram(data, self.train_ids[i], n)
 
             # Tests the n-gram model on the test set belonging to the iteration of the k-fold.
-            labels_predictions_fold, scores[i] = evaluate_n_gram(model, data, self.test_ids[i], n)
+            labels_predictions_fold = evaluate_n_gram(model, data, self.test_ids[i], n)
             total_labels_predictions = pd.concat([total_labels_predictions, labels_predictions_fold])
-
-            return total_labels_predictions, scores
+        return total_labels_predictions

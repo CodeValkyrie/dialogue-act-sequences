@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from crossvalidation import CrossValidation
-from data import DataSet, Preprocessing
+from data import DataSet, Preprocessing, Statistics
 
 
 """ This is a script that performs cross-validation on a n-gram language models given the different settings 
@@ -37,10 +37,70 @@ for n_gram in n:
     print("Cross-validation for input {}-gram".format(n_gram))
 
     # Performs cross-validation.
-    labels_predictions, scores = cross_validation.validate_n_gram(data_frame, n_gram)
+    labels_predictions= cross_validation.validate_n_gram(data_frame, n_gram)
 
     # Adds the labels and predictions for this input as columns to the original data in one DataFrame.
     data_frame = data_frame.merge(labels_predictions, how='left', left_index=True, right_index=True)
 
 # Saves the DataFrame containing all the labels and predictions for the different n_gram models.
 data_frame.to_csv('analyses/n_gram_models_predictions.csv')
+
+########################################################################################################################
+#                               COMPUTING THE PRECISION, RECALL AND F1-SCORES                                          #
+########################################################################################################################
+
+# Reads in the data containing the predictions of a model under the given settings.
+data = Preprocessing('analyses/n_gram_models_predictions.csv')
+statistics = Statistics(data)
+
+# Gets the precision, recall and f1-score for every dialogue act for different model input settings.
+for n_gram in n:
+    accuracy_dict = dict()
+    accuracy_frame = data.data[['labels_' + str(n_gram) + '_gram', 'predictions_' + str(n_gram) + '_gram']].dropna()
+    accuracy = accuracy_frame[accuracy_frame['labels_' + str(n_gram) + '_gram'] ==
+                              accuracy_frame['predictions_' + str(n_gram) + '_gram']].shape[0] / accuracy_frame.shape[0]
+    print("The accuracy of the " + str(n_gram) + "-gram model is: ", accuracy)
+
+    for dialogue_act in data.DAs:
+        columns = ['labels_' + str(n_gram) + '_gram', 'predictions_' + str(n_gram) + '_gram']
+        precision, recall, f1 = statistics.precision_recall_f1(data.data, columns, dialogue_act)
+
+        if 'all_levels' in accuracy_dict.keys():
+            accuracy_dict['all_levels']['p'][dialogue_act] = precision
+            accuracy_dict['all_levels']['r'][dialogue_act] = recall
+            accuracy_dict['all_levels']['f1'][dialogue_act] = f1
+        else:
+            accuracy_dict['all_levels'] = dict()
+            accuracy_dict['all_levels']['p'] = dict()
+            accuracy_dict['all_levels']['r'] = dict()
+            accuracy_dict['all_levels']['f1'] = dict()
+
+        for level in data.levels:
+            level_data = data.data[data.data['level'] == level]
+            precision, recall, f1 = statistics.precision_recall_f1(level_data, columns, dialogue_act)
+
+            if 'level_' + str(level) in accuracy_dict.keys():
+                accuracy_dict['level_' + str(level)]['p'][dialogue_act] = precision
+                accuracy_dict['level_' + str(level)]['r'][dialogue_act] = recall
+                accuracy_dict['level_' + str(level)]['f1'][dialogue_act] = f1
+            else:
+                accuracy_dict['level_' + str(level)] = dict()
+                accuracy_dict['level_' + str(level)]['p'] = dict()
+                accuracy_dict['level_' + str(level)]['r'] = dict()
+                accuracy_dict['level_' + str(level)]['f1'] = dict()
+
+    # Code below adapted from https://stackoverflow.com/questions/13575090/construct-pandas-dataframe-from-items-in-nested-dictionary
+    # Prepares the separate parts of the dictionary to be stored in one DataFrame.
+    level_accuracies = []
+    frames = []
+    for level_accuracy, accuracy_scores in accuracy_dict.items():
+        level_accuracies.append(level_accuracy)
+        frames.append(pd.DataFrame.from_dict(accuracy_scores, orient='index'))
+
+    # Stores all the accuracy scores for all the levels over all the dialogue acts into a DataFrame.
+    accuracies = pd.concat(frames, keys=level_accuracies).T.round(4)
+
+    # Saves the accuracy DataFrame to a .csv file.
+    accuracy_file = 'analyses/' + str(n_gram) + 'gram_model_accuracy.csv'
+    accuracies.to_csv(accuracy_file)
+

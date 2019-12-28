@@ -168,6 +168,16 @@ def generate_sequence(model, input, x):
     return sequence
 
 def train_n_gram(data, ids, n):
+    """ Returns an n-gram model.
+
+        Args:
+            data    - the original data frame containing all the data
+            ids     - the IDs of the dialogues the n-gram model will train on
+            n       - the length of the n-gram model
+
+        Returns:
+            NLTK NgramCounter containing the counts of all the n-grams in the training set.
+    """
 
     # Makes n-grams of the all the dialogues with the given ids.
     training_dialogues = []
@@ -179,25 +189,50 @@ def train_n_gram(data, ids, n):
     return n_gram_counts
 
 def evaluate_n_gram(model, data, ids, n):
+    """ Returns a DataFrame containing the predictions and labels of the n-gram model indexed by the input indices.
+
+            Args:
+                model   - NLTK NgramCounter containing the counts of all the n-grams during training
+                data    - the original data frame containing all the data
+                ids     - the IDs of the dialogues the n-gram model will test on
+                n       - the length of the n-gram model
+
+            Returns:
+                DataFrame containing the predictions and labels of the n-gram model indexed by the input indices.
+        """
 
     # Makes predictions for all the dialogue acts in the dialogues with the given ids.
+    test_labels_predictions = pd.DataFrame()
     for ID in ids:
         test_dialogue = pd.DataFrame(data[data['dialogue_id'] == ID]['dialogue_act'])
-        test_dialogue['labels_' + str(n) + '_gram'] = test_dialogue['dialogue_act'].shift(1)
+
+        # The labels of the inputs are the inputs with an offset of 1 down.
+        test_dialogue['labels_' + str(n) + '_gram'] = test_dialogue['dialogue_act'].shift(-1)
+
+        # Gets the list of inputs of which the predictions must be computed.
         test_dialogue_inputs = list(test_dialogue['dialogue_act'].to_numpy())
-        test_dialogue_predictions = []
-        for i in range(1, len(test_dialogue_inputs)):
+
+        # The first and second input are needed for the trigram model, so the first inputs prediction is not made.
+        test_dialogue_predictions = [np.nan]
+
+        # Makes predictions for each of the dialogue input turns according to the model used.
+        for i in range(1, len(test_dialogue_inputs) - 1):
             possible_predictions = None
+
+            # Get possible bigrams in case of bigram model.
             if n == 2:
                 possible_predictions = model[[test_dialogue_inputs[i]]].items()
+
+            # Get possible trigrams in case of trigram model.
             elif n == 3:
-                possible_predictions = model[[test_dialogue_inputs[i-1]]].items()[[test_dialogue_inputs[i]]]
-                print('items', possible_predictions)
+                possible_predictions = model[[test_dialogue_inputs[i-1], test_dialogue_inputs[i]]].items()
+
+            # In case another model is inputted.
             else:
                 print("Can only work with bigram and trigram models.")
                 exit(1)
 
-            # Takes the bigram with the input at the base and the highest count as the prediction of the input.
+            # Takes the n-gram with the input at the base and the highest count as the prediction of the input.
             best_count = 0
             best_prediction = ""
             for prediction, count in possible_predictions:
@@ -205,24 +240,17 @@ def evaluate_n_gram(model, data, ids, n):
                     best_count = count
                     best_prediction = prediction
             test_dialogue_predictions.append(best_prediction)
-        predictions_frame = pd.DataFrame(test_dialogue_predictions).shift(1)
-        print(predictions_frame.size)
-        print(test_dialogue.size)
-        test_dialogue['predictions_' + str(n) + '_gram'] = predictions_frame.to_numpy()
-        print(test_dialogue)
+
+        # The last input of a dialogue does not have a label so the last prediction is NaN
+        test_dialogue_predictions.append(np.nan)
+
+        # Stores the labels and predictions of the dialogues, together with their input indices, into a DataFrame.
+        test_dialogue['predictions_' + str(n) + '_gram'] = test_dialogue_predictions
+        test_labels_predictions = pd.concat([test_labels_predictions, test_dialogue[['labels_' + str(n) + '_gram', 'predictions_' + str(n) + '_gram']]])
+    return test_labels_predictions
 
 
 
-        labels_predictions_fold = pd.DataFrame(labels_predictions_fold.reshape(-1, 3))
-
-        # Stores the labels and predictions in a DataFrame.
-        input_frame = pd.DataFrame(labels_predictions)
-        columns = input_frame.columns
-        input_frame = input_frame.set_index(columns[0]).rename_axis(None)
-        input_frame = input_frame.rename(
-            columns={columns[1]: 'labels_' + str(n_gram) + '_gram', columns[2]: 'predictions_'
-                                                                                + str(n_gram) + '_gram'})
-        input_frame = input_frame.astype(str)
 
 #####################################################################################
 
