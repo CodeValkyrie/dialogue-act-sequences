@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from model import LSTM
 from data import DataSet
+from nltk.util import ngrams
+from nltk.lm import NgramCounter
 
 # Global Variables initialisation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -164,6 +166,63 @@ def generate_sequence(model, input, x):
         output, hidden_state = model(sequence[-1], hidden_state)
         sequence.append(output)
     return sequence
+
+def train_n_gram(data, ids, n):
+
+    # Makes n-grams of the all the dialogues with the given ids.
+    training_dialogues = []
+    for ID in ids:
+        training_dialogue = list(data[data['dialogue_id'] == ID]['dialogue_act'])
+        training_dialogues.append(training_dialogue)
+    n_grams = [list(ngrams(dialogue, n)) for dialogue in training_dialogues]
+    n_gram_counts = NgramCounter(n_grams)
+    return n_gram_counts
+
+def evaluate_n_gram(model, data, ids, n):
+
+    # Makes predictions for all the dialogue acts in the dialogues with the given ids.
+    for ID in ids:
+        test_dialogue = pd.DataFrame(data[data['dialogue_id'] == ID]['dialogue_act'])
+        test_dialogue['labels_' + str(n) + '_gram'] = test_dialogue['dialogue_act'].shift(1)
+        test_dialogue_inputs = list(test_dialogue['dialogue_act'].to_numpy())
+        test_dialogue_predictions = []
+        for i in range(1, len(test_dialogue_inputs)):
+            possible_predictions = None
+            if n == 2:
+                possible_predictions = model[[test_dialogue_inputs[i]]].items()
+            elif n == 3:
+                possible_predictions = model[[test_dialogue_inputs[i-1]]].items()[[test_dialogue_inputs[i]]]
+                print('items', possible_predictions)
+            else:
+                print("Can only work with bigram and trigram models.")
+                exit(1)
+
+            # Takes the bigram with the input at the base and the highest count as the prediction of the input.
+            best_count = 0
+            best_prediction = ""
+            for prediction, count in possible_predictions:
+                if count >= best_count:
+                    best_count = count
+                    best_prediction = prediction
+            test_dialogue_predictions.append(best_prediction)
+        predictions_frame = pd.DataFrame(test_dialogue_predictions).shift(1)
+        print(predictions_frame.size)
+        print(test_dialogue.size)
+        test_dialogue['predictions_' + str(n) + '_gram'] = predictions_frame.to_numpy()
+        print(test_dialogue)
+
+
+
+        labels_predictions_fold = pd.DataFrame(labels_predictions_fold.reshape(-1, 3))
+
+        # Stores the labels and predictions in a DataFrame.
+        input_frame = pd.DataFrame(labels_predictions)
+        columns = input_frame.columns
+        input_frame = input_frame.set_index(columns[0]).rename_axis(None)
+        input_frame = input_frame.rename(
+            columns={columns[1]: 'labels_' + str(n_gram) + '_gram', columns[2]: 'predictions_'
+                                                                                + str(n_gram) + '_gram'})
+        input_frame = input_frame.astype(str)
 
 #####################################################################################
 

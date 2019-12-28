@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 import torch
-from main import train, evaluate
+from main import train, evaluate, train_n_gram, evaluate_n_gram
 from model import LSTM
+from nltk.lm import NgramCounter
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -67,7 +68,8 @@ class CrossValidation:
             self.train_ids = [x + y for x, y in zip(self.train_ids, train_samples)]
             self.test_ids = [x + y for x, y in zip(self.test_ids, test_samples)]
 
-    def validate(self, lr, batch_size, epochs, input_classes, save_labels_predictions=False, weighted='unweighted'):
+    def validate(self, lr, batch_size, epochs, input_classes, embedding_dimensions=[4, 20, 10] , hidden_nodes=64,
+                 save_labels_predictions=False, weighted='unweighted'):
         """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
             set with given training parameters.
 
@@ -88,7 +90,8 @@ class CrossValidation:
         for i in range(self.k):
 
             # Initialises model.
-            model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=[4, 20, 10] , hidden_nodes=64, n_layers=1, n_classes=13, input_classes=input_classes).to(device)
+            model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=embedding_dimensions,
+                         hidden_nodes=hidden_nodes, n_layers=1, n_classes=13, input_classes=input_classes).to(device)
 
             # Trains the model on the training set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.train_ids[i])
@@ -105,3 +108,30 @@ class CrossValidation:
         if save_labels_predictions:
             return total_labels_predictions, scores
         return scores
+
+    def validate_n_gram(self, data, n):
+        """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
+            set with given training parameters.
+
+            Args:
+                data    = a DataFrame containing the original data
+                n       = the length of the n-grams used
+
+
+            Returns:
+                - A DataFrame containing the predictions and the labels corresponding to an input index in the original
+                data frame.
+
+        """
+        scores = np.empty(self.k)
+        total_labels_predictions = pd.DataFrame()
+        for i in range(self.k):
+
+            # Trains the n-gram model on the training set belonging to the iteration of the k-fold.
+            model = train_n_gram(data, self.train_ids[i], n)
+
+            # Tests the n-gram model on the test set belonging to the iteration of the k-fold.
+            labels_predictions_fold, scores[i] = evaluate_n_gram(model, data, self.test_ids[i], n)
+            total_labels_predictions = pd.concat([total_labels_predictions, labels_predictions_fold])
+
+            return total_labels_predictions, scores
