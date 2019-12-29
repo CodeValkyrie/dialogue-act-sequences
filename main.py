@@ -9,6 +9,7 @@ from model import LSTM
 from data import DataSet
 from nltk.util import ngrams
 from nltk.lm import NgramCounter
+from nltk.lm import MLE
 
 # Global Variables initialisation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -178,6 +179,8 @@ def train_n_gram(data, ids, n):
         Returns:
             NLTK NgramCounter containing the counts of all the n-grams in the training set.
     """
+    # Extracts all the dialogue act classes.
+    unique_dialogue_acts = sorted(list(set(data['dialogue_act'])))
 
     # Makes n-grams of the all the dialogues with the given ids.
     training_dialogues = []
@@ -185,8 +188,16 @@ def train_n_gram(data, ids, n):
         training_dialogue = list(data[data['dialogue_id'] == ID]['dialogue_act'])
         training_dialogues.append(training_dialogue)
     n_grams = [list(ngrams(dialogue, n)) for dialogue in training_dialogues]
-    n_gram_counts = NgramCounter(n_grams)
-    return n_gram_counts
+
+    if n == 3:
+        print(n_grams[0])
+
+    # Trains the n-gram model on the dialogue n-grams and the unique dialogue acts.
+    lm = MLE(n)
+    lm.fit(n_grams, unique_dialogue_acts)
+
+    # n_gram_counts = NgramCounter(n_grams)
+    return lm
 
 def evaluate_n_gram(model, data, ids, n):
     """ Returns a DataFrame containing the predictions and labels of the n-gram model indexed by the input indices.
@@ -219,27 +230,40 @@ def evaluate_n_gram(model, data, ids, n):
         for i in range(1, len(test_dialogue_inputs) - 1):
             possible_predictions = None
 
-            # Get possible bigrams in case of bigram model.
+            # # Get possible bigrams in case of bigram model.
+            # if n == 2:
+            #     possible_predictions = model[[test_dialogue_inputs[i]]].items()
+            #
+            # # Get possible trigrams in case of trigram model.
+            # elif n == 3:
+            #     possible_predictions = model[[test_dialogue_inputs[i-1], test_dialogue_inputs[i]]].items()
+            #
+            # # In case another model is inputted.
+            # else:
+            #     print("Can only work with bigram and trigram models.")
+            #     exit(1)
+
+            # # Takes the n-gram with the input at the base and the highest count as the prediction of the input.
+            # best_count = 0
+            # best_prediction = ""
+            # for prediction, count in possible_predictions:
+            #     if count >= best_count:
+            #         best_count = count
+            #         best_prediction = prediction
+            sequence = []
+
+            # The bigram model has a context of length one.
             if n == 2:
-                possible_predictions = model[[test_dialogue_inputs[i]]].items()
+                sequence = [test_dialogue_inputs[i]]
 
-            # Get possible trigrams in case of trigram model.
+            # The trigram model has a context of
             elif n == 3:
-                possible_predictions = model[[test_dialogue_inputs[i-1], test_dialogue_inputs[i]]].items()
-
-            # In case another model is inputted.
+                sequence = [test_dialogue_inputs[i-1], test_dialogue_inputs[i]]
+            if len(list(model.counts[sequence].items())) == 0:
+                test_dialogue_predictions.append(np.nan)
             else:
-                print("Can only work with bigram and trigram models.")
-                exit(1)
+                test_dialogue_predictions.append(model.generate(text_seed=sequence))
 
-            # Takes the n-gram with the input at the base and the highest count as the prediction of the input.
-            best_count = 0
-            best_prediction = ""
-            for prediction, count in possible_predictions:
-                if count >= best_count:
-                    best_count = count
-                    best_prediction = prediction
-            test_dialogue_predictions.append(best_prediction)
 
         # The last input of a dialogue does not have a label so the last prediction is NaN
         test_dialogue_predictions.append(np.nan)
