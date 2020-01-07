@@ -428,6 +428,36 @@ class Statistics:
                 filename = '_'.join(['analyses/level', str(level), speaker_bigram, 'top', str(n), 'bigrams.csv'])
                 top_n_bigrams.to_csv(filename)
 
+    def get_da_counts(self, data, column, levels):
+
+        # All the levels' average distributions over the dialogues are stored into the columns of a DataFrame.
+        distributions = pd.DataFrame(index=sorted(list(set(data['dialogue_act']))))
+        for level in levels:
+            level_data = data[data['level'] == level]
+            dialogue_ids = sorted(list(set(level_data['dialogue_id'])))
+
+            # The average distribution over every dialogue in the given level is stored in a DataFrame.
+            level_distributions = pd.DataFrame(index=sorted(list(set(data['dialogue_act']))))
+            for ID in dialogue_ids:
+                dialogue_data = level_data[level_data['dialogue_id'] == ID]
+
+                # The dialogue acts in the dialogue are counted and then the counts are added to the data frame.
+                distribution = dialogue_data['dialogue_act'].value_counts()
+                distribution = pd.DataFrame(distribution.values, index=distribution.index, columns=[ID])
+                level_distributions = level_distributions.merge(distribution, how='left', left_index=True,
+                                                                right_index=True)
+
+            # The average distribution is taken over all the dialogues in the level.
+            level_distributions = level_distributions.sum(axis=1, skipna=True)
+            level_distributions = pd.DataFrame(level_distributions.values, index=level_distributions.index,
+                                               columns=['level' + str(level)])
+
+            # The average distribution of the level is added to a DataFrame containing the other levels as well.
+            distributions = distributions.merge(level_distributions, how='left', left_index=True, right_index=True)
+
+        # Saves the dialogue act distributions per level to a .csv file.
+        distributions.to_csv('analyses/' + column + '_column_dialogue_act_counts.csv', index=True, header=True)
+
     def precision_recall_f1(self, data, columns, dialogue_act):
         """ Returns the precision, recall and f1-score for a dialogue act given a label and a prediction column in a
             DataFrame.
@@ -447,28 +477,33 @@ class Statistics:
         labels = columns[0]
         predictions = columns[1]
 
-        # Computes the precision.
+        # Computes the precision = true positives / (true positives + false positives).
+        # All the DataFrame rows with the dialogue act in the prediction column (true positives + false positives)
         predictions_of_da = data_columns[data_columns[predictions] == dialogue_act]
+
+        # The true positives are the ones of which the label and the prediction are both the dialogue act.
         true_positives = len(predictions_of_da[predictions_of_da[labels] == dialogue_act])
 
         # The number of the predictions of the dialogue act is the true positives and false positives combined.
-        predictions_of_da = len(predictions_of_da)
+        true_positives_and_false_positives = len(predictions_of_da)
 
-        # If the number of predictions as the dialogue act is 0, the precision is set to 0.
-        precision = 0
-        if predictions_of_da != 0:
-            precision = true_positives / predictions_of_da
+        # If the number of predictions as the dialogue act is 0, the precision is set to NaN.
+        precision = np.nan
+        if true_positives_and_false_positives != 0:
+            precision = true_positives / true_positives_and_false_positives
 
         # Computes the recall.
-        # The number of the labels of the dialogue act is the true positives and false negatives combined.
-        labels_of_da = len(data_columns[data_columns[labels] == dialogue_act])
+        # All the DataFrame rows with the dialogue act in the label column (true positives + false negatives)
+        true_positives_and_false_negatives = len(data_columns[data_columns[labels] == dialogue_act])
 
-        # If the number of labels as the dialogue act is 0, the recall is set to 0.
-        recall = true_positives / labels_of_da
+        # If the number of labels as the dialogue act is 0, the recall is set to NaN.
+        recall = np.nan
+        if true_positives_and_false_negatives != 0:
+            recall = true_positives / true_positives_and_false_negatives
 
-        # If both the precision and the recall are 0, the f1-score is set to zero as well.
-        f1 = 0
-        if precision != 0 or recall != 0:
+        # If either the precision or the recall is NaN, the f1-score is set to NaN as well.
+        f1 = np.nan
+        if precision != np.nan and recall != np.nan and (precision != 0 or recall != 0):
             f1 = 2 * (precision * recall) / (precision + recall)
 
         return precision, recall, f1

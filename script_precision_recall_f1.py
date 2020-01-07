@@ -18,7 +18,7 @@ from data import Preprocessing, Statistics
     metric (columns).       
 """
 
-weighted = 'unweighted'
+weighted = 'weighted'
 sequence_lengths = [3]
 input_settings = ['_d', '_d_s', '_d_s_l', '_d_s_l_u']
 

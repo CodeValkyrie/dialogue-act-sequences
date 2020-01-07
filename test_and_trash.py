@@ -102,6 +102,11 @@ def evaluate(model, data, save_labels_predictions=False):
         return labels_predictions, accuracy_total / i
     return accuracy_total / i
 
+
+dialogue_ids = sorted(list(map(str, list(set(level_data[column])))))
+if 'nan' in dialogue_ids:
+    dialogue_ids.remove('nan')
+
 # This is the shape of the predictions and labels after the folds (44595, 3)
 
     # (15219, 7)
