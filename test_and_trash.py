@@ -114,3 +114,26 @@ if 'nan' in dialogue_ids:
 
     # 45539
     # print(preprocessed.data.shape[0] * 3 - preprocessed.number_of_dialogues)
+
+possible_predictions = None
+
+            # # Get possible bigrams in case of bigram model.
+            # if n == 2:
+            #     possible_predictions = model[[test_dialogue_inputs[i]]].items()
+            #
+            # # Get possible trigrams in case of trigram model.
+            # elif n == 3:
+            #     possible_predictions = model[[test_dialogue_inputs[i-1], test_dialogue_inputs[i]]].items()
+            #
+            # # In case another model is inputted.
+            # else:
+            #     print("Can only work with bigram and trigram models.")
+            #     exit(1)
+
+            # # Takes the n-gram with the input at the base and the highest count as the prediction of the input.
+            # best_count = 0
+            # best_prediction = ""
+            # for prediction, count in possible_predictions:
+            #     if count >= best_count:
+            #         best_count = count
+            #         best_prediction = prediction

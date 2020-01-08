@@ -503,7 +503,9 @@ class Statistics:
 
         # If either the precision or the recall is NaN, the f1-score is set to NaN as well.
         f1 = np.nan
-        if precision != np.nan and recall != np.nan and (precision != 0 or recall != 0):
+        if precision == 0 and recall == 0:
+            f1 = 0
+        elif precision != np.nan and recall != np.nan:
             f1 = 2 * (precision * recall) / (precision + recall)
 
         return precision, recall, f1

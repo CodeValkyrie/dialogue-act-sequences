@@ -8,8 +8,8 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 from model import LSTM
 from data import DataSet
 from nltk.util import ngrams
-from nltk.lm import NgramCounter
 from nltk.lm import MLE
+from nltk.lm.preprocessing import padded_everygram_pipeline
 
 # Global Variables initialisation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -187,16 +187,15 @@ def train_n_gram(data, ids, n):
     for ID in ids:
         training_dialogue = list(data[data['dialogue_id'] == ID]['dialogue_act'])
         training_dialogues.append(training_dialogue)
-    n_grams = [list(ngrams(dialogue, n)) for dialogue in training_dialogues]
 
-    if n == 3:
-        print(n_grams[0])
+    # Get the every n-gram up to n from the training dialogues.
+    n_grams = []
+    for i in range(n):
+        n_grams = n_grams + [list(ngrams(dialogue, n - i)) for dialogue in training_dialogues]
 
     # Trains the n-gram model on the dialogue n-grams and the unique dialogue acts.
     lm = MLE(n)
     lm.fit(n_grams, unique_dialogue_acts)
-
-    # n_gram_counts = NgramCounter(n_grams)
     return lm
 
 def evaluate_n_gram(model, data, ids, n):
@@ -228,42 +227,16 @@ def evaluate_n_gram(model, data, ids, n):
 
         # Makes predictions for each of the dialogue input turns according to the model used.
         for i in range(1, len(test_dialogue_inputs) - 1):
-            possible_predictions = None
-
-            # # Get possible bigrams in case of bigram model.
-            # if n == 2:
-            #     possible_predictions = model[[test_dialogue_inputs[i]]].items()
-            #
-            # # Get possible trigrams in case of trigram model.
-            # elif n == 3:
-            #     possible_predictions = model[[test_dialogue_inputs[i-1], test_dialogue_inputs[i]]].items()
-            #
-            # # In case another model is inputted.
-            # else:
-            #     print("Can only work with bigram and trigram models.")
-            #     exit(1)
-
-            # # Takes the n-gram with the input at the base and the highest count as the prediction of the input.
-            # best_count = 0
-            # best_prediction = ""
-            # for prediction, count in possible_predictions:
-            #     if count >= best_count:
-            #         best_count = count
-            #         best_prediction = prediction
             sequence = []
 
-            # The bigram model has a context of length one.
+            # Compute the right context for the n-gram model.
             if n == 2:
                 sequence = [test_dialogue_inputs[i]]
-
-            # The trigram model has a context of
             elif n == 3:
                 sequence = [test_dialogue_inputs[i-1], test_dialogue_inputs[i]]
-            if len(list(model.counts[sequence].items())) == 0:
-                test_dialogue_predictions.append(np.nan)
-            else:
-                test_dialogue_predictions.append(model.generate(text_seed=sequence))
 
+            # Predict the next DA given the context
+            test_dialogue_predictions.append(model.generate(text_seed=sequence))
 
         # The last input of a dialogue does not have a label so the last prediction is NaN
         test_dialogue_predictions.append(np.nan)
@@ -272,9 +245,6 @@ def evaluate_n_gram(model, data, ids, n):
         test_dialogue['predictions_' + str(n) + '_gram'] = test_dialogue_predictions
         test_labels_predictions = pd.concat([test_labels_predictions, test_dialogue[['labels_' + str(n) + '_gram', 'predictions_' + str(n) + '_gram']]])
     return test_labels_predictions
-
-
-
 
 #####################################################################################
 
