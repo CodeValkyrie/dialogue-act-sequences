@@ -28,7 +28,7 @@ class LSTM(nn.Module):
 
         # Embed the words in the utterance text.
         weights_matrix = torch.tensor(np.load('weights_matrix.npy'))
-        num_embeddings, embedding_dim = weights_matrix.shape()
+        num_embeddings, embedding_dim = weights_matrix.shape
         self.word_embedding = nn.Embedding(num_embeddings, embedding_dim)
 
         # The word embedder has pretrained weights that should not be trained during runtime.
