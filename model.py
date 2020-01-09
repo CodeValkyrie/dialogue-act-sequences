@@ -62,7 +62,7 @@ class LSTM(nn.Module):
         self.n_layers = n_layers
         self.n_classes = n_classes
 
-        self.data = pd.load_csv('data/DA_labeled_belc_2019.csv')
+        self.data = pd.read_csv('data/DA_labeled_belc_2019.csv')
 
     def forward(self, data, hidden_state):
         """ Takes the input, performs forward propagation and returns the current output and the hidden state
@@ -82,17 +82,17 @@ class LSTM(nn.Module):
         input = torch.cat((input, data[:, :, 3].unsqueeze(2).float()), dim=2)
 
         # Compute the utterance text embedding for the batch.
-        utterances = torch.empty(dims[0], dims[1], self.embedding_dimension[3]).to(device)
+        utterances = torch.empty(0, dims[1], self.embedding_dimensions[3]).to(device)
         for i in range(dims[0]):
             sub_sequence_indices = data[i, :, 4]
-            sub_sequence_texts = data.data[sub_sequence_indices, 'text']
-            sub_sequence_texts = [str(t).split() for t in sub_sequence_texts.values.tolist()]
+            sub_sequence_texts = self.data.loc[sub_sequence_indices.cpu().numpy(), ['text']]
+            sub_sequence_texts = [str(t[0]).split() for t in sub_sequence_texts.values.tolist()]
             batch_utterances = torch.empty(0, self.embedding_dimensions[3]).to(device)
             for utterance_text in sub_sequence_texts:
-                utterance_vector = torch.zeros().to(device)
+                utterance_vector = torch.zeros(1, self.embedding_dimensions[3]).to(device)
                 for word in utterance_text:
                     index = self.word_vector_mapping[word]
-                    utterance_vector += self.word_embedding(index).float()
+                    utterance_vector += self.word_embedding(torch.tensor([index]).to(device)).float()
 
                 # Stores the i'th subsequence's utterance text of all the inputs in the batch.
                 batch_utterances = torch.cat((batch_utterances, utterance_vector), dim=0)
@@ -100,7 +100,7 @@ class LSTM(nn.Module):
             # Stores the subsequences of the batch together.
             utterances = torch.cat((utterances, batch_utterances.unsqueeze(0)), dim=0)
 
-        # Concatenates the utterence text embeddings to the rest of the data.
+        # Concatenates the utterance text embeddings to the rest of the data.
         input = torch.cat((input, utterances), dim=2)
 
         output, hidden = self.lstm(input, hidden_state)

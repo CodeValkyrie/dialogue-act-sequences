@@ -32,7 +32,7 @@ epochs = 20
 
 # Preprocesses the data for the sequence length.
 preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-preprocessed.save_dialogues_as_matrices(sequence_length=3)
+preprocessed.save_dialogues_as_matrices(sequence_length=3, store_index=True)
 
 # Loops over all the settings, computes the accuracy and outputs it into a data frame.
 output = np.empty((1, 3)).astype(str)

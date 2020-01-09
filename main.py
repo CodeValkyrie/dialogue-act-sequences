@@ -60,7 +60,7 @@ def train(model, data, learning_rate, batch_size, epochs, weighted='unweighted')
     if weighted == 'weighted':
         distribution = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None).sort_index()
         distribution = distribution.max() / distribution
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor(distribution.to_numpy().flatten()).float())
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor(distribution.to_numpy().flatten()).float().to(device))
 
     # ADJUST FOR OTHER OPTIMISERS
     optimiser = optim.RMSprop(model.parameters(), lr=learning_rate)
