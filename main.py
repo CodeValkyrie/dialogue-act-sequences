@@ -76,7 +76,7 @@ def train(model, data, learning_rate, batch_size, epochs, weighted='unweighted')
                 optimiser.zero_grad()
                 batch = batch.to(device)
                 labels = labels.to(device)
-                output, hidden = model(batch[:, :, :4], None)
+                output, hidden = model(batch, None)
 
                 # The output needs to be transposed to (batch, number_of_classes, sequence_length) for the criterion.
                 # The output can stay 3D but the labels must be 2D, so the following takes the argmax of the labels
@@ -112,7 +112,8 @@ def evaluate(model, data, save_labels_predictions=False):
     for dialogue in data:
         batches_labels = data.get_batch_labels(dialogue, batch_size=16)
         for batch, labels in batches_labels:
-
+            batch = batch.to(device)
+            labels = labels.to(device)
             if labels_predictions is None:
                 labels_predictions = np.empty((0, 3))
 
@@ -122,14 +123,14 @@ def evaluate(model, data, save_labels_predictions=False):
                 # Only stores the last labels and predictions in a sequence because these are the most fine-tuned.
                 labels_to_store = np.expand_dims(labels[-1], axis=1)
                 index_to_store = np.expand_dims(batch[-1, :, 4], axis=1)
-                predictions = torch.argmax(predict(model, batch[:, :, :4]), dim=2).detach().numpy()
+                predictions = torch.argmax(predict(model, batch), dim=2).detach().numpy()
                 predictions_to_store = np.expand_dims(predictions[-1, :], axis=1)
                 labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions_to_store), axis=1)
                 labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=0)
 
             # Computes the accuracy score.
-            labels = labels.numpy().reshape(-1)
-            predictions = predictions.reshape(-1)
+            labels = labels.detach().cpu().numpy().reshape(-1)
+            predictions = predictions.detach.cpu().numpy().reshape(-1)
             accuracy_total += accuracy_score(labels, predictions)
             i += 1
     print('accuracy', accuracy_total / i)

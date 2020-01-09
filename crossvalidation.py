@@ -68,8 +68,7 @@ class CrossValidation:
             self.train_ids = [x + y for x, y in zip(self.train_ids, train_samples)]
             self.test_ids = [x + y for x, y in zip(self.test_ids, test_samples)]
 
-    def validate(self, lr, batch_size, epochs, input_classes, embedding_dimensions=[4, 20, 10] , hidden_nodes=64,
-                 save_labels_predictions=False, weighted='unweighted'):
+    def validate(self, lr, batch_size, epochs, hidden_nodes=64, save_labels_predictions=False, weighted='unweighted'):
         """ Performs k-fold cross-validation on the objects data set with a given model on given levels of the data
             set with given training parameters.
 
@@ -90,8 +89,7 @@ class CrossValidation:
         for i in range(self.k):
 
             # Initialises model.
-            model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=embedding_dimensions,
-                         hidden_nodes=hidden_nodes, n_layers=1, n_classes=13, input_classes=input_classes).to(device)
+            model = LSTM(input_dimensions=[2, 13, 4], hidden_nodes=hidden_nodes, n_layers=1, n_classes=13).to(device)
 
             # Trains the model on the training set belonging to the iteration of the k-fold.
             self.data.set_dialogue_ids(self.train_ids[i])
