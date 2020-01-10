@@ -118,19 +118,19 @@ def evaluate(model, data, save_labels_predictions=False):
                 labels_predictions = np.empty((0, 3))
 
             # If the predictions and labels must be stored, stores the labels and predictions with their input's index.
+            predictions = torch.argmax(predict(model, batch), dim=2)
             if save_labels_predictions:
 
                 # Only stores the last labels and predictions in a sequence because these are the most fine-tuned.
                 labels_to_store = np.expand_dims(labels[-1], axis=1)
                 index_to_store = np.expand_dims(batch[-1, :, 4], axis=1)
-                predictions = torch.argmax(predict(model, batch), dim=2).detach().numpy()
                 predictions_to_store = np.expand_dims(predictions[-1, :], axis=1)
                 labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions_to_store), axis=1)
                 labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=0)
 
             # Computes the accuracy score.
             labels = labels.detach().cpu().numpy().reshape(-1)
-            predictions = predictions.detach.cpu().numpy().reshape(-1)
+            predictions = predictions.detach().cpu().numpy().reshape(-1)
             accuracy_total += accuracy_score(labels, predictions)
             i += 1
     print('accuracy', accuracy_total / i)

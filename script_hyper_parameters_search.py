@@ -19,7 +19,6 @@ weighted = ['weighted', 'unweighted']
 
 # Hyper parameters that are fixed.
 batch_size = 16
-epochs = 20
 sequence_length = 3
 k = 10
 number_of_layers = 1
