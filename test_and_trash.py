@@ -137,3 +137,9 @@ possible_predictions = None
             #     if count >= best_count:
             #         best_count = count
             #         best_prediction = prediction
+
+# Performs cross validation on different subsets of classes as input parameters.
+    for subsection in range(len(input_classes)):
+        classes = input_classes[:subsection + 1]
+        input_short = '_'.join([c[0] for c in classes])
+        print("Cross-validation for input {}".format(classes))
