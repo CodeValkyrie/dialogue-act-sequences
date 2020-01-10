@@ -122,9 +122,9 @@ def evaluate(model, data, save_labels_predictions=False):
             if save_labels_predictions:
 
                 # Only stores the last labels and predictions in a sequence because these are the most fine-tuned.
-                labels_to_store = np.expand_dims(labels[-1], axis=1)
-                index_to_store = np.expand_dims(batch[-1, :, 4], axis=1)
-                predictions_to_store = np.expand_dims(predictions[-1, :], axis=1)
+                labels_to_store = np.expand_dims(labels[-1].detach().cpu().numpy(), axis=1)
+                index_to_store = np.expand_dims(batch[-1, :, 4].detach().cpu().numpy(), axis=1)
+                predictions_to_store = np.expand_dims(predictions[-1, :].detach().cpu().numpy(), axis=1)
                 labels_predictions_batch = np.concatenate((index_to_store, labels_to_store, predictions_to_store), axis=1)
                 labels_predictions = np.concatenate((labels_predictions, labels_predictions_batch), axis=0)
 
