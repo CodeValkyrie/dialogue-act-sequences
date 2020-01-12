@@ -23,7 +23,7 @@ from data import DataSet, Preprocessing
 
 # Analysis parameters.
 # sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
-sequence_lengths = [3]
+sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
 levels = [1, 2, 3, 4]
 k = 10
 weighted = 'weighted'

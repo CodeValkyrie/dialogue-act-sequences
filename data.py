@@ -354,7 +354,7 @@ class Statistics:
         normalised_distribution = (distribution / distribution.sum(axis=0, skipna=True)).round(3)
         normalised_distribution = normalised_distribution.sort_values(ascending=False)
         normalised_distribution.to_csv('analyses/dialogue_act_distribution.csv', index=True, header=False)
-        return normalised_distribution.sort_index()
+        return normalised_distribution
 
     def get_bigram_distribution(self):
         """ Saves the distributions of ((speaker, DA)|(speaker, DA)) bigrams per level to a csv file.

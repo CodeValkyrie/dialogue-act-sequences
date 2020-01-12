@@ -143,3 +143,22 @@ possible_predictions = None
         classes = input_classes[:subsection + 1]
         input_short = '_'.join([c[0] for c in classes])
         print("Cross-validation for input {}".format(classes))
+
+
+# Initialises the DataFrame that will be used for the Seaborn graphs.
+data_frame = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None)
+data_frame = pd.DataFrame(index=data_frame.index)
+
+# Gets the f1-scores over all levels for every sequence length the model was run on.
+for sequence_length in sequence_lengths:
+    filename = 'analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_accuracy.csv'
+    accuracies = pd.read_csv(filename, index_col=[0], header=[0, 1])
+    data_frame = data_frame.merge(accuracies['all_levels']['f1'], how='left', left_index=True, right_index=True)
+    data_frame = data_frame.rename(columns={"f1": "sequence length " + str(sequence_length)})
+
+# Gets the f1-scores over all levels for every baseline model.
+for baseline in baselines:
+    accuracies = pd.read_csv('analyses/model_' + baseline + '_baseline_accuracy.csv', index_col=[0], header=[0, 1])
+    data_frame = data_frame.merge(accuracies['all_levels']['f1'], how='left', left_index=True, right_index=True)
+    data_frame = data_frame.rename(columns={"f1": baseline})
+    data_frame = data_frame.set_index("Dialogue Act")

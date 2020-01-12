@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
-from data import Preprocessing, Statistics
 
 
 """ This is a script that plots the f1-scores per dialogue act given different input settings and sequence lengths. 
@@ -9,118 +8,81 @@ from data import Preprocessing, Statistics
 
     The variables that need to be specified:
         weighted           = chosen from {"weighted", "unweighted"} to specify which model's predictions are to be used.
-        sequence_lengths   = the sequence length with which the model made the predictions.
-        input_settings     = a list containing the input settings used: a subset from 
-                             {'dialogue act', 'speaker', 'level', 'utterance length'}. The list must consist of 
-                             abbreviations in the format '_<first letter>', for example ['_d', '_d_u'], which uses first 
-                             only dialogue acts and then dialogue acts and utterance lengths.
-        colors             = a list containing the colors of the bars in the graphs that correspond to the 
-                             input settings. 
+        sequence_lengths   = a list containing the sequence lengths with which the model made the predictions.
+        baselines          = a list containing all the baselines of which the f1-scores should be included
 
     The script outputs png plots containing the f1-scores of the dialogue acts per input setting.       
 """
 
-# Sets the font size of the plot labels.
-plt.rcParams['xtick.labelsize'] = 6
+weighted = 'weighted'
+sequence_lengths = [2, 3, 5, 7, 10]
+baselines = ['majority_class', 'random', 'weighted_random', '2gram', '3gram']
 
-weighted = 'unweighted'
-sequence_lengths = [3]
-input_settings = ['_d', '_d_s', '_d_s_l', '_d_s_l_u']
-baselines = ['majority_class', 'random', 'weighted_random']
-colors = ['b', 'r', 'y', 'g']
+########################################################################################################################
+#                   CONSTRUCT DATAFRAME THAT CONCATENATES ALL THE NEEDED F1-SCORE COLUMNS                              #
+########################################################################################################################
 
-# Initialises variables to be defined later.
-names = []
-x = []
+# Initialises the DataFrame that will be used for the Seaborn graphs.
+data_frame = pd.DataFrame(columns=["Dialogue Act", "F1-Score", "Model"])
 
-preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-statistics = Statistics(preprocessed)
-da_sorted_by_occurance = list(statistics.get_da_distribution().index)
-
-for sequence_length in sequence_lengths:
-
-    # Initialises the plot format.
-    fig, ax = plt.subplots()
-
-    # Gets the precision, recall and f1-score for every dialogue act for different model input settings.
-    for input_setting in input_settings:
-
-        # Loads in the data for the plots.
-        filename = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + input_setting + \
-                   '_accuracy.csv'
-        accuracies = pd.read_csv(filename, index_col=[0], header=[0, 1])
-
-        # Sort the accuracies by the overall occurance ratio of the classes.
-        accuracies = accuracies.reindex(index=da_sorted_by_occurance)
-
-        # Gets the correct labels and coordinates for the x-axis.
-        names = list(accuracies.index)
-        names = [s[:5] for s in names]
-        x = np.arange(len(names))
-
-        # Gets the f1 score of all the dialogue acts over all the levels.
-        values = list(accuracies['all_levels']['f1'].to_numpy())
-
-        # Gets the index of the input setting and the offset on the x axis and width of each bar.
-        i = input_settings.index(input_setting)
-        j = i
-        if j > 1:
-            j -= 4
-        width = 0.8
-
-        # Plots the f1-scores for each dialogue act per input setting
-        setting = ax.bar(x - j * width / 4, values, width=0.2, color=colors[i], align='center', label=input_setting[1:])
-
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('F1-score')
-    ax.set_xlabel('Dialogue Act')
-    ax.set_title('Prediction performance of DAs given different settings')
-    ax.set_xticks(x)
-    ax.set_xticklabels(names)
-    ax.legend()
-
-    # Saves the plot to a file.
-    figure_file = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + \
-                  '_histogram_per_setting.png'
-    plt.savefig(figure_file)
-
-# Initialises the plot format.
-    fig, ax = plt.subplots()
+# Gets the f1-scores over all levels for every baseline model.
 for baseline in baselines:
+    accuracies = pd.read_csv('analyses/model_' + baseline + '_baseline_accuracy.csv', index_col=[0], header=[0, 1])
+    accuracies = accuracies['all_levels']['f1']
+    accuracies = accuracies.reset_index()
+    accuracies.columns = ["Dialogue Act", "F1-Score"]
+    accuracies["Model"] = baseline
+    data_frame = pd.concat([data_frame, accuracies], ignore_index=True)
 
-    # Loads in the data for the plots.
-    filename = 'analyses/model_' + baseline + '_baseline_accuracy.csv'
+# Gets the f1-scores over all levels for every sequence length the model was run on.
+for sequence_length in sequence_lengths:
+    filename = 'analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_accuracy.csv'
     accuracies = pd.read_csv(filename, index_col=[0], header=[0, 1])
+    accuracies = accuracies['all_levels']['f1']
+    accuracies = accuracies.reset_index()
+    accuracies.columns = ["Dialogue Act", "F1-Score"]
+    accuracies["Model"] = "Sequence Length " + str(sequence_length)
+    data_frame = pd.concat([data_frame, accuracies], ignore_index=True)
 
-    # Sort the accuracies by the overall occurance ratio of the classes.
-    accuracies = accuracies.reindex(index=da_sorted_by_occurance)
+########################################################################################################################
+#                   MAKE PLOT WITH DA ON X-AXIS AND F1-SCORE ON Y-AXIS PER MODEL IN ONE GRAPH                          #
+########################################################################################################################
 
-    # Gets the correct labels and coordinates for the x-axis.
-    names = list(accuracies.index)
-    names = [s[:5] for s in names]
-    x = np.arange(len(names))
+# Sets colour palette for the graph.
+colours = ['red', 'orange', 'yellow', 'green', 'lime green']
+baseline_colours = sns.xkcd_palette(colours)
+model_colours = sns.color_palette('Blues', len(sequence_lengths) + 1)
+colour_palette = baseline_colours + model_colours[1:]
+sns.set_palette(colour_palette)
 
-    # Gets the f1 score of all the dialogue acts over all the levels.
-    values = list(accuracies['all_levels']['f1'].to_numpy())
+# Plots the F1-Scores per Dialogue Act for Different Models.
+distribution_order = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None)
+graph = sns.catplot(x="Dialogue Act", y="F1-Score", hue="Model", data=data_frame, kind="bar", height=8, aspect=1.5,
+                    order=distribution_order.index)
+graph.set_xticklabels(rotation=45, horizontalalignment='right', fontsize='x-small')
+plt.title('F1-Scores per Dialogue Act for Different Models')
+plt.savefig('analyses/f1_per_dialogue_act_histogram.png')
+plt.clf()
 
-    # Gets the index of the input setting and the offset on the x axis and width of each bar.
-    i = baselines.index(baseline)
-    j = i
-    if j > 1:
-        j -= 3
-    width = 0.8
+########################################################################################################################
+#           MAKE PLOT WITH MODELS ON X-AXIS AND AVERAGE PER CLASS F1-SCORE WITH ERROR ON Y-AXIS                        #
+########################################################################################################################
 
-    # Plots the f1-scores for each dialogue act per input setting
-    setting = ax.bar(x - j * width / 3, values, width=0.2, color=colors[i], align='center', label=baseline)
+# Sets colour palette for the graph.
+colours = ['red', 'orange', 'yellow', 'green', 'lime green']
+baseline_colours = sns.xkcd_palette(colours)
+model_colours = sns.color_palette('Blues', len(sequence_lengths) + 1)
+colour_palette = baseline_colours + model_colours[1:]
+sns.set_palette(colour_palette)
 
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-ax.set_ylabel('F1-score')
-ax.set_xlabel('Dialogue Act')
-ax.set_title('Prediction performance of DAs for different baselines')
-ax.set_xticks(x)
-ax.set_xticklabels(names)
-ax.legend()
+# Plots the Average F1-Scores over the Dialogue Acts per Model with error bars.
+# sns.set(style="whitegrid")
+graph = sns.barplot(x="Model", y="F1-Score", data=data_frame)
+plt.title('Average F1-Scores over the Dialogue Acts per Model')
+plt.savefig('analyses/average_f1_per_model_histogram.png')
+plt.clf()
 
-# Saves the plot to a file.
-figure_file = 'analyses/model_baselines_histogram.png'
-plt.savefig(figure_file)
+
+########################################################################################################################
+#                   MAKE PLOT PER LEVEL                          #
+########################################################################################################################

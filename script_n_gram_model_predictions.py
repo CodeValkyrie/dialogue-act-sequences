@@ -101,6 +101,6 @@ for n_gram in n:
     accuracies = pd.concat(frames, keys=level_accuracies).T.round(4)
 
     # Saves the accuracy DataFrame to a .csv file.
-    accuracy_file = 'analyses/' + str(n_gram) + 'gram_model_accuracy.csv'
+    accuracy_file = 'analyses/model_' + str(n_gram) + 'gram_baseline_accuracy.csv'
     accuracies.to_csv(accuracy_file)
 
