@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class LSTM(nn.Module):
     """ Recurrent Neural Network (RNN) model"""
@@ -56,7 +57,7 @@ class LSTM(nn.Module):
         data = data.long()
 
         # Constructs the right input according to which classes are wanted.
-        input = torch.empty(dims[0], dims[1], 0)
+        input = torch.empty(dims[0], dims[1], 0).to(device)
         if 'speaker' in self.input_classes:
             input = torch.cat((input, self.speaker_embedding(data[:,:,0]).float()), dim=2)
         if 'dialogue_act' in self.input_classes:
