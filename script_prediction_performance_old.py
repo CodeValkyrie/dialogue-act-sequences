@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from crossvalidation import CrossValidation
+from crossvalidation_old import CrossValidation
 from data import DataSet, Preprocessing
 
 
@@ -21,46 +21,56 @@ from data import DataSet, Preprocessing
     The script outputs a matrix containing the mean accuracy of the cross-validation per sequence length        
 """
 
+# weighted_lr_0.001_hidden_20_emb_1 [1, 7, 2]
+# unweighted_lr_0.001_hidden_12_emb_1
+# [[1, 7, 2, 1], [2, 13, 4, 1]]
+
 # Analysis parameters.
 # sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
 sequence_lengths = [3]
 levels = [1, 2, 3, 4]
 k = 10
-weighted = 'weighted'
+models = ['weighted', 'unweighted']
 
 # Model hyper parameters.
 number_of_layers = 1
-hidden_nodes = 64
+hidden_nodes = None
 input_classes = ['dialogue_act', 'speaker', 'level', 'utterance_length']
+embedding_dimensions = [1, 7, 2]
 
 # Training hyper parameters.
-learning_rate = 5e-3
+learning_rate = 0.001
 batch_size = 16
 epochs = 20
 
-output = np.empty((1, 3))
-for sequence_length in sequence_lengths:
-    print("Cross-validation for sequence length {}".format(sequence_length))
+for weighted in models:
 
-    # Preprocesses the data for the sequence length.
-    preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
-    preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
-    data_frame = preprocessed.data
-    data = DataSet()
+    if weighted == 'weighted':
+        hidden_nodes = 20
+    elif weighted == 'unweighted':
+        hidden_nodes = 12
+    output = np.empty((1, 3))
+    for sequence_length in sequence_lengths:
+        print("Cross-validation for sequence length {}".format(sequence_length))
 
-    # Initialise cross validator.
-    cross_validation = CrossValidation(data, k)
-    cross_validation.make_k_fold_cross_validation_split(levels)
+        # Preprocesses the data for the sequence length.
+        preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
+        preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
+        data_frame = preprocessed.data
+        data = DataSet()
 
-    # Performs cross validation on different subsets of classes as input parameters.
-    for subsection in range(len(input_classes)):
-        classes = input_classes[:subsection + 1]
-        input_short = '_'.join([c[0] for c in classes])
-        print("Cross-validation for input {}".format(classes))
+        # Initialise cross validator.
+        cross_validation = CrossValidation(data, k)
+        cross_validation.make_k_fold_cross_validation_split(levels)
+
+        input_short = '_'.join([c[0] for c in input_classes])
+        print("Cross-validation for input {}".format(input_classes))
 
         # Performs cross-validation.
         labels_predictions, scores = cross_validation.validate(learning_rate, batch_size, epochs,
-                                                               classes, save_labels_predictions=True, weighted=weighted)
+                                                               input_classes, embedding_dimensions=embedding_dimensions,
+                                                               hidden_nodes=hidden_nodes, save_labels_predictions=True,
+                                                               weighted=weighted)
 
         # Stores the labels and predictions in a DataFrame.
         input_frame = pd.DataFrame(labels_predictions)
