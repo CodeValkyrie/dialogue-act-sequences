@@ -10,7 +10,7 @@ from data import DataSet, Preprocessing
 """
 
 # All the hyper parameters this search will loop over.
-learning_rates = [0.1, 0.01, 0.001, 0.0001, 0.00001]
+learning_rates = [0.01, 0.001, 0.0001]
 hidden_dimensions = [12, 16, 20]
 embedding_dimensions = [[1, 7, 2, 1], [2, 13, 4, 1]]
 weighted = ['weighted', 'unweighted']
