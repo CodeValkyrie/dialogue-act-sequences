@@ -83,6 +83,40 @@ plt.tight_layout(2)
 plt.savefig('analyses/average_utterance_length_per_speaker_per_level_histogram.png')
 
 
+#######################################################################################################################
+#                                         PLOTTING DIALOGUE ACT BIGRAM DATA                                           #
+#######################################################################################################################
+
+sns.set_palette(sns.color_palette('Blues_r', 6))
+statistics.get_bigram_distribution()
+for level in [1, 2, 3, 4]:
+    bigram_distribution = pd.read_csv('analyses/level_' + str(level) + '_dialogue_bigram_distribution.csv',
+                                      index_col=[0, 1], names=['Distribution'], header=0)
+    bigram_distribution = bigram_distribution.sort_values(by=['Distribution'], ascending=False)
+
+    # Plots the bigram distribution per level.
+    graph = bigram_distribution.plot.line()
+    plt.ylim(0, 1.0)
+    _, labels = plt.xticks()
+    graph.set_xticklabels(labels, visible=False)
+    plt.xlabel("Bigrams")
+    plt.ylabel("Distribution")
+    plt.title('Bigram Distribution Level ' + str(level))
+    plt.tight_layout(2)
+    plt.savefig('analyses/bigram_distribution_level_' + str(level) + '_line_plot.png')
+
+    # Plots the top 40 most occuring bigrams per level.
+    graph = bigram_distribution[:40].sort_values(by='Distribution', ascending=True).plot.barh()
+    _, labels = plt.yticks()
+    graph.set_yticklabels(labels, fontsize='x-small')
+    plt.xlabel("Occurance")
+    plt.ylabel("Bigrams")
+    plt.title('Top 40 Most Occuring Bigrams at Level ' + str(level))
+    plt.xlim(0, 1.0)
+    plt.tight_layout()
+    plt.savefig('analyses/most_occuring_bigrams_level_' + str(level) + '_histogram.png')
+
+
 
 
 

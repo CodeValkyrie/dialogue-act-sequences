@@ -368,6 +368,21 @@ class Statistics:
         data = self.data.data
         data = data.replace({'participant': 'S', 'interviewer': 'T'})
 
+        # Changes the annotation of the dialogue acts.
+        data = data.replace({'statement': 'ST',
+                             'general_other_question': 'GOQ',
+                             'spanish': 'SP',
+                             'wh_question': 'WQ',
+                             'signal_non_understanding': 'SNU',
+                             'yes_answers': 'YA',
+                             'backchannel_acknowledge': 'BA',
+                             'yes_no_question': 'YNQ',
+                             'backchannel_question': 'BQ',
+                             'response_acknowledgement': 'RA',
+                             'no_answers': 'NA',
+                             'repeat_phrase': 'RP',
+                             'declarative_yes_no_question': 'DQ'})
+
         # Saves a DataFrame containing the bigram distributions to a csv file for every level.
         for level in range(1, 5):
             level_data = data[data['level'] == level]
@@ -386,7 +401,7 @@ class Statistics:
                 # Extracts and counts the bigrams per dialogue.
                 for i in range(start, end):
                     speakers = dialogue_data.at[i, 'speaker'] + dialogue_data.at[i + 1, 'speaker']
-                    dialogue_acts = dialogue_data.at[i, 'dialogue_act'] + '|' + dialogue_data.at[i + 1, 'dialogue_act']
+                    dialogue_acts = dialogue_data.at[i, 'dialogue_act'] + '-' + dialogue_data.at[i + 1, 'dialogue_act']
                     bigram = (speakers, dialogue_acts)
                     if bigram in dialogue_dict[ID].keys():
                         dialogue_dict[ID][bigram] += 1
@@ -400,7 +415,7 @@ class Statistics:
             level_dialogue = (level_dialogue.sum(axis=1, skipna=True) / number_of_dialogues).sort_index()
 
             # Convert values to percentages.
-            level_dialogue = (level_dialogue * 100).round(2)
+            level_dialogue = level_dialogue.round(4)
 
             # The average distributions are saved to a csv file.
             level_dialogue.to_csv('analyses/level_' + str(level) + '_dialogue_bigram_distribution.csv', header=['%'])
