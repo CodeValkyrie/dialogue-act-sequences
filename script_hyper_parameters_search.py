@@ -12,48 +12,42 @@ from data import DataSet, Preprocessing
 """
 
 # All the hyper parameters this search will loop over.
-learning_rates = [0.01, 0.001, 0.0001, 0.00001]
 hidden_dimensions = [30, 35, 40, 45, 50]
-levels = [1, 2, 3, 4]
-weighted = ['weighted', 'unweighted']
 
 # Hyper parameters that are fixed.
-batch_size = 16
+levels = [1, 2, 3, 4]
+weighted = 'weighted'
 sequence_length = 3
 k = 10
 number_of_layers = 1
-
-# Training hyper parameters.
+learning_rate = 0.001
 batch_size = 16
 epochs = 20
 
 # Need to store convergence in table to determine number of epochs.
 
 # Preprocesses the data for the sequence length.
-preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
+preprocessed = Preprocessing('data/train_belc_das_2020.csv')
 preprocessed.save_dialogues_as_matrices(sequence_length=3, store_index=True)
 
 # Loops over all the settings, computes the accuracy and outputs it into a data frame.
 output = np.empty((1, 3)).astype(str)
-for model in weighted:
-    print("Cross-validation for {} model".format(model))
-    for lr in learning_rates:
-        print("Cross-validation for learning rate {}".format(lr))
-        for hidden_dimension in hidden_dimensions:
-            print("Cross-validation for hidden dimension {}".format(hidden_dimension))
 
-            data = DataSet()
+for hidden_dimension in hidden_dimensions:
+    print("Cross-validation for hidden dimension {}".format(hidden_dimension))
 
-            # Performs cross-validation.
-            cross_validation = CrossValidation(data, k)
-            cross_validation.make_k_fold_cross_validation_split(levels)
-            scores = cross_validation.validate(lr, batch_size, epochs, hidden_nodes=hidden_dimension, weighted=model)
+    data = DataSet()
 
-            # Store the mean accuracy and standard deviation over the cross validation per setting in a Numpy array.
-            setting_name = '_'.join(model, 'lr', str(lr), 'hidden', str(hidden_dimension))
-            entry = np.array([setting_name, str(np.mean(scores)), str(np.std(scores))]).reshape(-1, 3)
-            output = np.concatenate((output, entry), axis=0)
-            print(output)
+    # Performs cross-validation.
+    cross_validation = CrossValidation(data, k)
+    cross_validation.make_k_fold_cross_validation_split(levels)
+    scores = cross_validation.validate(learning_rate, batch_size, epochs, hidden_nodes=hidden_dimension, weighted=weighted)
+
+    # Store the mean accuracy and standard deviation over the cross validation per setting in a Numpy array.
+    setting_name = '_'.join([weighted, 'lr', str(learning_rate), 'hidden', str(hidden_dimension)])
+    entry = np.array([setting_name, str(np.mean(scores)), str(np.std(scores))]).reshape(-1, 3)
+    output = np.concatenate((output, entry), axis=0)
+    print(output)
 
 # Makes a pandas DataFrame to output to a .csv file.
 data = pd.DataFrame(output, columns=['sequence length', 'accuracy', 'SD'])
