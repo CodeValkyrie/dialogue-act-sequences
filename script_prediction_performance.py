@@ -46,6 +46,8 @@ for sequence_length in sequence_lengths:
     # Preprocesses the data for the sequence length.
     preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
     preprocessed.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
+    preprocessed.save_dialogue_ids()
+    preprocessed.save_class_representation()
     data = DataSet()
 
     # Initialise cross validator.

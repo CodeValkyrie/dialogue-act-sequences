@@ -19,10 +19,10 @@ from data import Preprocessing, Statistics
 """
 
 weighted = 'weighted'
-sequence_lengths = [10]
+sequence_lengths = [2, 3, 5, 7]
 
 # Reads in the data containing the predictions of a model under the given settings.
-filename = 'analyses/' + str(weighted) + '_model_predictions_seq_len_10.csv'
+filename = 'analyses/' + str(weighted) + '_model_predictions.csv'
 data = Preprocessing(filename)
 statistics = Statistics(data)
 
@@ -33,29 +33,27 @@ for sequence_length in sequence_lengths:
     for dialogue_act in data.DAs:
         precision, recall, f1 = statistics.precision_recall_f1(data.data, columns, dialogue_act)
 
-        if 'all_levels' in accuracy_dict.keys():
-            accuracy_dict['all_levels']['p'][dialogue_act] = precision
-            accuracy_dict['all_levels']['r'][dialogue_act] = recall
-            accuracy_dict['all_levels']['f1'][dialogue_act] = f1
-        else:
+        if 'all_levels' not in accuracy_dict.keys():
             accuracy_dict['all_levels'] = dict()
             accuracy_dict['all_levels']['p'] = dict()
             accuracy_dict['all_levels']['r'] = dict()
             accuracy_dict['all_levels']['f1'] = dict()
+        accuracy_dict['all_levels']['p'][dialogue_act] = precision
+        accuracy_dict['all_levels']['r'][dialogue_act] = recall
+        accuracy_dict['all_levels']['f1'][dialogue_act] = f1
 
         for level in data.levels:
             level_data = data.data[data.data['level'] == level]
             precision, recall, f1 = statistics.precision_recall_f1(level_data, columns, dialogue_act)
 
-            if 'level_' + str(level) in accuracy_dict.keys():
-                accuracy_dict['level_' + str(level)]['p'][dialogue_act] = precision
-                accuracy_dict['level_' + str(level)]['r'][dialogue_act] = recall
-                accuracy_dict['level_' + str(level)]['f1'][dialogue_act] = f1
-            else:
+            if 'level_' + str(level) not in accuracy_dict.keys():
                 accuracy_dict['level_' + str(level)] = dict()
                 accuracy_dict['level_' + str(level)]['p'] = dict()
                 accuracy_dict['level_' + str(level)]['r'] = dict()
                 accuracy_dict['level_' + str(level)]['f1'] = dict()
+            accuracy_dict['level_' + str(level)]['p'][dialogue_act] = precision
+            accuracy_dict['level_' + str(level)]['r'][dialogue_act] = recall
+            accuracy_dict['level_' + str(level)]['f1'][dialogue_act] = f1
 
     # Code below adapted from https://stackoverflow.com/questions/13575090/construct-pandas-dataframe-from-items-in-nested-dictionary
     # Prepares the separate parts of the dictionary to be stored in one DataFrame.

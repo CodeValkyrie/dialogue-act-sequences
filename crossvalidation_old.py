@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 from main import train, evaluate, train_n_gram, evaluate_n_gram
 from model_without_text import LSTM
-from nltk.lm import NgramCounter
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

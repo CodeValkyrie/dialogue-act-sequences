@@ -48,35 +48,24 @@ plt.ylabel("Counts")
 plt.tight_layout(2)
 plt.savefig('analyses/dialogue_act_count_per_level_histogram.png')
 
-# Gets the dialogue act distribution per speaker for each level
-tutor_distribution = pd.read_csv('analyses/interviewer_dialogue_act_distributions.csv', index_col=[0],
-                                 names=['1', '2', '3', '4'], header=0)
-tutor_distribution['5'] = tutor_distribution.mean(axis=1, skipna=True)
-student_distribution = pd.read_csv('analyses/participant_dialogue_act_distributions.csv', index_col=[0],
-                                   names=['1', '2', '3', '4'], header=0)
-student_distribution['5'] = student_distribution.mean(axis=1, skipna=True)
-
-# Plots the dialogue act distribution per speaker for each level separately.
-for level in range(1, 6):
-    level_distribution = tutor_distribution[[str(level)]]
-    level_distribution = level_distribution.merge(student_distribution[[str(level)]], how='left', left_index=True,
-                                                  right_index=True)
-    level_distribution.columns = ['Tutor', 'Student']
-    level_distribution = level_distribution.reindex(distribution_order.index)
-    # print(level_distribution)
-
-    sns.set_palette([sns.color_palette('Blues', 7)[3], sns.color_palette('Blues', 7)[6]])
-    graph = level_distribution.plot.bar()
-    if level == 5:
-        level = 'Total'
-    plt.title('Dialogue Act Distribution per Speaker for Level ' + str(level))
+for speaker in ['interviewer', 'participant']:
+    speaker_distribution = pd.read_csv('analyses/' + speaker + '_dialogue_act_distributions.csv', index_col=[0],
+                                     names=['Level 1', 'Level 2', 'Level 3', 'Level 4'], header=0)
+    speaker_distribution['Level Total'] = speaker_distribution.mean(axis=1, skipna=True)
+    speaker_distribution = speaker_distribution.reindex(distribution_order.index)
+    speaker_distribution = speaker_distribution.dropna()
+    graph = speaker_distribution.plot.bar()
+    if speaker == 'interviewer':
+        plt.title('Dialogue Act Distribution per Level for Tutor')
+    elif speaker == 'participant':
+        plt.title('Dialogue Act Distribution per Level for Student')
     _, labels = plt.xticks()
     graph.set_xticklabels(labels, rotation=45, horizontalalignment='right', fontsize='x-small')
     plt.xlabel("Dialogue Act")
     plt.ylabel("Distribution")
     plt.ylim(0, 1.0)
     plt.tight_layout(2)
-    plt.savefig('analyses/dialogue_act_distribution_per_speaker_level_' + str(level) + '_histogram.png')
+    plt.savefig('analyses/' + speaker + '_dialogue_act_distribution_per_level_histogram.png')
 
 # Plots the average utterance length per speaker per level
 utterance_lengths = pd.read_csv('analyses/average_utterance_length.csv', index_col=[0], names=['Student', 'Tutor'],
@@ -84,9 +73,6 @@ utterance_lengths = pd.read_csv('analyses/average_utterance_length.csv', index_c
 total = utterance_lengths.mean(axis=0)
 utterance_lengths = utterance_lengths.append(total, ignore_index=True)
 utterance_lengths.index =['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level Total']
-# plt.clf()
-
-# Plot the average utterance lengths per speaker per level.
 graph = utterance_lengths.plot.bar()
 plt.title('Average Utterance Length per Speaker per Level')
 _, labels = plt.xticks()

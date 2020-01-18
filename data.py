@@ -236,7 +236,7 @@ class Preprocessing:
         return self.DAs
 
     def add_baseline(self, baseline):
-        label_indices = list(self.data[self.data['labels_d'].notnull()]['labels_d'].index)
+        label_indices = list(self.data[self.data['labels_2_gram'].notnull()]['labels_2_gram'].index)
         number_labels = len(label_indices)
         if baseline == 'majority_class':
             majority_class = pd.DataFrame(['statement'] * number_labels, index=label_indices, columns=[baseline])
