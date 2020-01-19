@@ -15,6 +15,7 @@ statistics.get_da_distribution()
 statistics.get_da_distributions(['participant', 'interviewer'], [1, 2, 3, 4])
 statistics.get_da_counts(preprocessed.data, 'dialogue_act', [1, 2, 3, 4])
 statistics.get_average_utterance_length(['participant', 'interviewer'], [1, 2, 3, 4])
+statistics.get_speaker_ratios([1, 2, 3, 4])
 
 # Get the dialogue act distribution.
 distribution_order = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None)
@@ -68,6 +69,7 @@ for speaker in ['interviewer', 'participant']:
     plt.savefig('analyses/' + speaker + '_dialogue_act_distribution_per_level_histogram.png')
 
 # Plots the average utterance length per speaker per level
+sns.set_palette([sns.color_palette('Blues', 7)[3], sns.color_palette('Blues', 7)[6]])
 utterance_lengths = pd.read_csv('analyses/average_utterance_length.csv', index_col=[0], names=['Student', 'Tutor'],
                                 header=0)[['Tutor', 'Student']]
 total = utterance_lengths.mean(axis=0)
@@ -81,6 +83,19 @@ plt.xlabel("Level")
 plt.ylabel("Utterance Length")
 plt.tight_layout(2)
 plt.savefig('analyses/average_utterance_length_per_speaker_per_level_histogram.png')
+
+speaker_ratios = pd.read_csv('analyses/speaker_turn_ratios.csv', index_col=[0], header=[0])
+speaker_ratios['Level Total'] = speaker_ratios.mean(axis=1, skipna=True)
+graph = speaker_ratios.T.plot.bar()
+plt.title('Speaker Dialogue Ratios per Level')
+_, labels = plt.xticks()
+graph.set_xticklabels(labels, rotation=45, horizontalalignment='right', fontsize='x-small')
+plt.xlabel("Levels")
+plt.ylabel("Ratio")
+plt.ylim(0, 1.0)
+plt.tight_layout(2)
+plt.savefig('analyses/speaker_ratios_per_level_histogram.png')
+
 
 
 #######################################################################################################################

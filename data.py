@@ -540,3 +540,35 @@ class Statistics:
         predictions = columns[1]
         confusion_matrix = pd.crosstab(data[labels], data[predictions])
         return confusion_matrix.div(confusion_matrix.sum(axis=1), axis=0)
+
+    def get_speaker_ratios(self, levels):
+            ratios = pd.DataFrame(index=sorted(list(set(self.data.data['speaker']))))
+            for level in levels:
+                level_data = self.data.data[self.data.data['level'] == level]
+                dialogue_ids = sorted(list(set(level_data['dialogue_id'])))
+                number_of_dialogues = len(dialogue_ids)
+
+                level_ratios = pd.DataFrame(index=sorted(list(set(self.data.data['speaker']))))
+                for ID in dialogue_ids:
+                    dialogue_data = level_data[level_data['dialogue_id'] == ID]
+
+                    # The dialogue acts in the dialogue are counted and then the counts are normalised.
+                    ratio = dialogue_data['speaker'].value_counts()
+                    nd = (ratio / ratio.sum(axis=0, skipna=True)).round(3)
+                    normalised_distribution = pd.DataFrame(nd.values, index=nd.index, columns=[ID])
+
+                    # The normalised counts for the dialogue are added to the level DataFrame.
+                    level_ratios = level_ratios.merge(normalised_distribution, how='left',
+                                                                    left_index=True, right_index=True)
+
+                # The average distribution is taken over all the dialogues in the level.
+                level_ratios = (level_ratios.sum(axis=1, skipna=True) / number_of_dialogues).round(3)
+                level_ratios = pd.DataFrame(level_ratios.values, index=level_ratios.index,
+                                                   columns=['Level ' + str(level)])
+
+                # The average distribution of the level is added to a DataFrame containing the other levels as well.
+                ratios = ratios.merge(level_ratios, how='left', left_index=True,
+                                                    right_index=True)
+
+            # Saves the dialogue act distributions per level to a .csv file.
+            ratios.to_csv('analyses/speaker_turn_ratios.csv', index=True, header=True)
