@@ -11,7 +11,7 @@ weighted = 'weighted'
 
 # Model hyper parameters.
 number_of_layers = 1
-hidden_nodes = 16
+hidden_nodes = 50
 input_classes = ['dialogue_act', 'speaker', 'level', 'utterance_length']
 embedding_dimensions = [1, 7, 2]
 
