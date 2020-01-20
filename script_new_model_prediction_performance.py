@@ -20,26 +20,25 @@ learning_rate = 0.001
 batch_size = 16
 epochs = 20
 
+data_frame = pd.read_csv('data/test_belc_das_2020.csv')
+
 # Makes predictions for the weighted and unweighted model and stores them.
 for sequence_length in sequence_lengths:
     print("Prediction performance for sequence length " + str(sequence_length))
 
     # Preprocesses the training data for the sequence length.
-    preprocessed_train = Preprocessing('data/DA_labeled_belc_2019.csv')
+    preprocessed_train = Preprocessing('data/train_belc_das_2020.csv')
     preprocessed_train.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
     preprocessed_train.save_dialogue_ids()
     preprocessed_train.save_class_representation()
     train_data = DataSet()
 
     # Preprocesses the test data for the sequence length.
-    preprocessed_test = Preprocessing('data/DA_labeled_belc_2019.csv')
+    preprocessed_test = Preprocessing('data/test_belc_das_2020.csv')
     preprocessed_test.save_dialogues_as_matrices(sequence_length=sequence_length, store_index=True)
     preprocessed_test.save_dialogue_ids()
     preprocessed_test.save_class_representation()
-    data_frame = preprocessed_test.data
     test_data = DataSet()
-
-    output = np.empty((1, 3))
 
     # Initialises model.
     model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=embedding_dimensions,

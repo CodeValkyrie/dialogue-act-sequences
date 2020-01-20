@@ -19,10 +19,10 @@ from data import Preprocessing, Statistics
 """
 
 weighted = 'weighted'
-sequence_lengths = [2, 3, 5, 7]
+sequence_lengths = [2, 3, 5, 7, 10, 15, 20]
 
 # Reads in the data containing the predictions of a model under the given settings.
-filename = 'analyses/' + str(weighted) + '_model_predictions.csv'
+filename = 'analyses/new_model_predictions.csv'
 data = Preprocessing(filename)
 statistics = Statistics(data)
 

@@ -502,11 +502,6 @@ class Statistics:
         # The number of the predictions of the dialogue act is the true positives and false positives combined.
         true_positives_and_false_positives = len(predictions_of_da)
 
-        # If the number of predictions as the dialogue act is 0, the precision is set to NaN.
-        precision = np.nan
-        if true_positives_and_false_positives != 0:
-            precision = true_positives / true_positives_and_false_positives
-
         # Computes the recall.
         # All the DataFrame rows with the dialogue act in the label column (true positives + false negatives)
         true_positives_and_false_negatives = len(data_columns[data_columns[labels] == dialogue_act])
@@ -516,9 +511,16 @@ class Statistics:
         if true_positives_and_false_negatives != 0:
             recall = true_positives / true_positives_and_false_negatives
 
+        # If the number of predictions as the dialogue act is 0, the precision is set to NaN.
+        precision = np.nan
+        if true_positives_and_false_positives != 0:
+            precision = true_positives / true_positives_and_false_positives
+        elif recall == 0:
+            precision = 0
+
         # If either the precision or the recall is NaN, the f1-score is set to NaN as well.
         f1 = np.nan
-        if precision == 0 and recall == 0:
+        if recall == 0:
             f1 = 0
         elif precision != np.nan and recall != np.nan:
             f1 = 2 * (precision * recall) / (precision + recall)
