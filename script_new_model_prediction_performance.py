@@ -56,8 +56,8 @@ for sequence_length in sequence_lengths:
     input_frame = pd.DataFrame(labels_predictions)
     columns = input_frame.columns
     input_frame = input_frame.set_index(columns[0]).rename_axis(None)
-    input_frame = input_frame.rename(columns={columns[1]: 'labels_seq_len_' + weighted,
-                                              columns[2]: 'predictions_seq_len_' + weighted})
+    input_frame = input_frame.rename(columns={columns[1]: 'labels_seq_len_' + str(sequence_length),
+                                              columns[2]: 'predictions_seq_len_' + str(sequence_length)})
     input_frame = input_frame.astype(str)
 
     # Replaces all the numerical values of the labels and predictions with their name.
