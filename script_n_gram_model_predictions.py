@@ -61,8 +61,10 @@ for n_gram in n:
                               accuracy_frame['predictions_' + str(n_gram) + '_gram']].shape[0] / accuracy_frame.shape[0]
     print("The accuracy of the " + str(n_gram) + "-gram model is: ", accuracy)
 
+    columns = ['labels_' + str(n_gram) + '_gram', 'predictions_' + str(n_gram) + '_gram']
+    confusion_matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
+    confusion_matrix.to_csv('analyses/' + str(n_gram) + 'gram_error_analysis.csv')
     for dialogue_act in data.DAs:
-        columns = ['labels_' + str(n_gram) + '_gram', 'predictions_' + str(n_gram) + '_gram']
         precision, recall, f1 = statistics.precision_recall_f1(data.data, columns, dialogue_act)
 
         if 'all_levels' not in accuracy_dict.keys():

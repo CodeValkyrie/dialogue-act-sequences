@@ -23,12 +23,15 @@ for baseline in baselines:
     data.add_baseline(baseline)
 statistics = Statistics(data)
 
+data.data.to_csv('analyses/simple_baselines_predictions.csv')
 
 # Gets the precision, recall and f1-score for every dialogue act for different baselines.
 for baseline in baselines:
     accuracy_dict = dict()
+    columns = ['labels_2_gram', baseline]
+    confusion_matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
+    confusion_matrix.to_csv('analyses/' + baseline + '_error_analysis.csv')
     for dialogue_act in data.DAs:
-        columns = ['labels_2_gram', baseline]
         precision, recall, f1 = statistics.precision_recall_f1(data.data, columns, dialogue_act)
 
         if 'all_levels' not in accuracy_dict.keys():

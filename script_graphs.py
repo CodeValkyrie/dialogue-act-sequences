@@ -293,10 +293,11 @@ for sequence_length in sequence_lengths:
                        '_error_analysis.csv', index_col=[0], header=[0]).astype(float)
     graph = sns.heatmap(data, vmin=0, vmax=100, square=True, cmap='Blues')
     plt.ylabel('Labels')
-    plt.xlabel('Prediction')
-    plt.title('Error Analysis for Embedded Text Model and Sequence Length ' + str(sequence_length))
+    plt.xlabel('Predictions')
+    plt.title('Embedded Text Model Error Analysis for Sequence Length ' + str(sequence_length))
     plt.tight_layout()
     plt.savefig('analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_error_analysis.png')
+    plt.clf()
 
 # Makes heatmaps for the old model for different settings.
 for setting in old_models:
@@ -304,7 +305,24 @@ for setting in old_models:
                        header=[0]).astype(float)
     graph = sns.heatmap(data, vmin=0, vmax=100, square=True, cmap='Blues')
     plt.ylabel('Labels')
-    plt.xlabel('Prediction')
+    plt.xlabel('Predictions')
     plt.title('Error Analysis for the Old ' + setting + ' Model')
     plt.tight_layout()
     plt.savefig('analyses/old_' + setting + '_model_sequence_length_3_error_analysis.png')
+    plt.clf()
+
+baseline_mapping = {'majority_class': 'Majority Class',
+                    'random': 'Random Class',
+                    'weighted_random': 'Weighted Random Class',
+                    '2gram': 'Bigram',
+                    '3gram': 'Trigram'}
+
+for baseline in baselines:
+    data = pd.read_csv('analyses/' + baseline + '_error_analysis.csv', index_col=[0], header=[0]).astype(float)
+    graph = sns.heatmap(data, vmin=0, vmax=100, square=True, cmap='Blues')
+    plt.ylabel('Labels')
+    plt.xlabel('Predictions')
+    plt.title('Error Analysis for ' + baseline_mapping[baseline] + ' Model')
+    plt.tight_layout()
+    plt.savefig('analyses/' + baseline + '_error_analysis.png')
+    plt.clf()
