@@ -538,10 +538,19 @@ class Statistics:
                 A Dataframe containing the dialogue labels on the rows and the prediction distribution over the
                 dialogue acts on the columns.
         """
+        # Makes the confusion matrix according to the labels and predictions columns of the data.
         labels = columns[0]
         predictions = columns[1]
         confusion_matrix = pd.crosstab(data[labels], data[predictions])
-        return confusion_matrix.div(confusion_matrix.sum(axis=1), axis=0)
+        confusion_matrix = confusion_matrix.div(confusion_matrix.sum(axis=1), axis=0)
+
+        # Reorders the index and columns according to the dialogue act distribution.
+        distribution_order = pd.read_csv('analyses/dialogue_act_distribution.csv', index_col=[0], header=None)
+        confusion_matrix = confusion_matrix.reindex(distribution_order.index)
+
+        if set(distribution_order.index) == set(confusion_matrix.columns):
+            confusion_matrix = confusion_matrix[distribution_order.index]
+        return confusion_matrix
 
     def get_speaker_ratios(self, levels):
             ratios = pd.DataFrame(index=sorted(list(set(self.data.data['speaker']))))

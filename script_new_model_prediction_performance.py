@@ -1,8 +1,10 @@
 import pandas as pd
-import numpy as np
+import torch
 from model import LSTM
 from data import Preprocessing, DataSet
 from main import train, evaluate
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 sequence_lengths = [2, 3, 5, 7, 10, 15, 20]
 levels = [1, 2, 3, 4]
@@ -18,7 +20,7 @@ embedding_dimensions = [1, 7, 2]
 # Training hyper parameters.
 learning_rate = 0.001
 batch_size = 16
-epochs = 20
+epochs = 1
 
 data_frame = pd.read_csv('data/test_belc_das_2020.csv')
 
@@ -42,7 +44,7 @@ for sequence_length in sequence_lengths:
 
     # Initialises model.
     model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=embedding_dimensions,
-                 hidden_nodes=hidden_nodes, n_layers=1, n_classes=13, input_classes=input_classes)
+                 hidden_nodes=hidden_nodes, n_layers=1, n_classes=13, input_classes=input_classes).to(device)
 
     # Trains the model on the training set.
     train(model, train_data, learning_rate, batch_size, epochs, weighted)

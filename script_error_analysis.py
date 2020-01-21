@@ -14,21 +14,30 @@ from data import Preprocessing, Statistics
     The script outputs csv files containing the normalised distribution of predictions (columns) for each label (rows).
 """
 
-weighted = 'unweighted'
-sequence_lengths = [3]
-input_settings = ['_d', '_d_s', '_d_s_l', '_d_s_l_u']
+settings = ['unweighted', 'weighted']
+sequence_lengths = [2, 3, 5, 7, 10, 15, 20]
 
+# Reads in the data containing the predictions of the model with sentence embeddings for different sequence lengths
+filename = 'analyses/new_model_predictions.csv'
+data = Preprocessing(filename)
+statistics = Statistics(data)
+
+# Computes the confusion matrix for different sequence lengths.
 for sequence_length in sequence_lengths:
+    columns = ['labels_seq_len_' + str(sequence_length), 'predictions_seq_len_' + str(sequence_length)]
+    matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
+    error_file = 'analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_error_analysis.csv'
+    matrix.to_csv(error_file)
 
-    # Reads in the data containing the predictions of a model under the given settings.
-    filename = 'analyses/' + str(weighted) + '_model_sequence_length_' + str(sequence_length) + '_predictions.csv'
-    data = Preprocessing(filename)
-    statistics = Statistics(data)
+# Reads in the data containing the predictions of the old weighted and unweighted models.
+filename = 'analyses/old_model_sequence_length_3_test_set_predictions.csv'
+data = Preprocessing(filename)
+statistics = Statistics(data)
 
-    # Gets the precision, recall and f1-score for every dialogue act for different model input settings.
-    for input_setting in input_settings:
-        columns = ['labels' + input_setting, 'predictions' + input_setting]
-        matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
-        error_file = 'analyses/' + weighted + '_model_sequence_length_' + str(sequence_length) + input_setting + \
-                     '_error_analysis.csv'
-        matrix.to_csv(error_file)
+# Computes the confusion matrix for the old weighted and unweighted models.
+for weighted in settings:
+    columns = ['labels_' + weighted, 'predictions_' + weighted]
+    matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
+    error_file = 'analyses/old_' + weighted + '_model_sequence_length_3_error_analysis.csv'
+    matrix.to_csv(error_file)
+

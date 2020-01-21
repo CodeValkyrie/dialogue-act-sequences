@@ -34,7 +34,6 @@ for baseline in baselines:
     accuracies.columns = ["Dialogue Act", "F1-Score"]
     accuracies["Model"] = baseline
     data_frame = pd.concat([data_frame, accuracies], ignore_index=True)
-    print('PRINT' + baseline, data_frame)
 
 # Gets the f1-scores over all levels for every sequence length the model was run on.
 for sequence_length in sequence_lengths:
@@ -92,13 +91,13 @@ sns.set_palette(colour_palette)
 
 # Plots the Average F1-Scores over the Dialogue Acts per Model with error bars.
 # sns.set(style="whitegrid")
-plt.figure(figsize=(7, 7))
+plt.figure(figsize=(10, 5))
 graph = sns.barplot(x="Model", y="F1-Score", data=data_frame)
 _, labels = plt.xticks()
 graph.set_xticklabels(labels, rotation=45, horizontalalignment='right', fontsize='x-small')
 plt.title('Average F1-Scores over the Dialogue Acts per Model')
-plt.ylim(0, 1.0)
-plt.tight_layout(2)
+# plt.ylim(0, 1.0)
+plt.tight_layout()
 plt.savefig('analyses/average_f1_per_model_histogram.png')
 plt.clf()
 
@@ -181,13 +180,13 @@ sns.set_palette(colour_palette)
 
 # Plots the Average F1-Scores over the Dialogue Acts per Model with error bars.
 # sns.set(style="whitegrid")
-plt.figure(figsize=(7, 7))
+plt.figure(figsize=(10, 5))
 graph = sns.barplot(x="Model", y="Precision", data=data_frame)
 _, labels = plt.xticks()
 graph.set_xticklabels(labels, rotation=45, horizontalalignment='right', fontsize='x-small')
 plt.title('Average precision over the Dialogue Acts per Model')
-plt.ylim(0, 1.0)
-plt.tight_layout(2)
+# plt.ylim(0, 1.0)
+plt.tight_layout()
 plt.savefig('analyses/average_precision_per_model_histogram.png')
 plt.clf()
 
@@ -268,17 +267,44 @@ sns.set_palette(colour_palette)
 
 # Plots the Average F1-Scores over the Dialogue Acts per Model with error bars.
 # sns.set(style="whitegrid")
-plt.figure(figsize=(7, 7))
+plt.figure(figsize=(10, 5))
 graph = sns.barplot(x="Model", y="Recall", data=data_frame)
 _, labels = plt.xticks()
 graph.set_xticklabels(labels, rotation=45, horizontalalignment='right', fontsize='x-small')
 plt.title('Average recall over the Dialogue Acts per Model')
-plt.ylim(0, 1.0)
-plt.tight_layout(2)
+# plt.ylim(0, 1.0)
+plt.tight_layout()
 plt.savefig('analyses/average_recall_per_model_histogram.png')
 plt.clf()
 
 
 ########################################################################################################################
-#                   MAKE PLOT PER LEVEL                          #
+#                                            MAKE PLOT PER LEVEL                                                       #
 ########################################################################################################################
+
+
+########################################################################################################################
+#                                        MAKE HEATMAP PLOTS FOR ERROR ANALYSIS                                         #
+########################################################################################################################
+
+# Makes heatmaps for the new model for different sequence lengths.
+for sequence_length in sequence_lengths:
+    data = pd.read_csv('analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) +
+                       '_error_analysis.csv', index_col=[0], header=[0]).astype(float)
+    graph = sns.heatmap(data, vmin=0, vmax=100, square=True, cmap='Blues')
+    plt.ylabel('Labels')
+    plt.xlabel('Prediction')
+    plt.title('Error Analysis for Embedded Text Model and Sequence Length ' + str(sequence_length))
+    plt.tight_layout()
+    plt.savefig('analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_error_analysis.png')
+
+# Makes heatmaps for the old model for different settings.
+for setting in old_models:
+    data = pd.read_csv('analyses/old_' + setting + '_model_sequence_length_3_error_analysis.csv', index_col=[0],
+                       header=[0]).astype(float)
+    graph = sns.heatmap(data, vmin=0, vmax=100, square=True, cmap='Blues')
+    plt.ylabel('Labels')
+    plt.xlabel('Prediction')
+    plt.title('Error Analysis for the Old ' + setting + ' Model')
+    plt.tight_layout()
+    plt.savefig('analyses/old_' + setting + '_model_sequence_length_3_error_analysis.png')
