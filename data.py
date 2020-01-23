@@ -550,6 +550,9 @@ class Statistics:
 
         if set(distribution_order.index) == set(confusion_matrix.columns):
             confusion_matrix = confusion_matrix[distribution_order.index]
+        else:
+            sorted_index = sort_list(list(confusion_matrix.columns), list(distribution_order.index))
+            confusion_matrix = confusion_matrix[sorted_index]
         return confusion_matrix
 
     def get_speaker_ratios(self, levels):
@@ -583,3 +586,32 @@ class Statistics:
 
             # Saves the dialogue act distributions per level to a .csv file.
             ratios.to_csv('analyses/speaker_turn_ratios.csv', index=True, header=True)
+
+    def get_n_dialogues_average_length(self, levels):
+        data_frame = pd.DataFrame(columns=['n_dialogues', 'average_dialogue_length'])
+        for level in levels:
+            level_data = self.data.data[self.data.data['level'] == level]
+
+            # The average distribution over every dialogue in the given level is stored in a DataFrame.
+            level_ids = sorted(list(set(level_data['dialogue_id'])))
+            number_of_dialogues = len(level_ids)
+            total_length_dialogues = 0
+            for ID in level_ids:
+                dialogue_data = level_data[level_data['dialogue_id'] == ID]
+                total_length_dialogues = total_length_dialogues + dialogue_data.shape[0]
+            average_length_dialogues = total_length_dialogues / number_of_dialogues
+            stats = {'n_dialogues': number_of_dialogues,
+                     'average_dialogue_length': average_length_dialogues}
+            data_frame = pd.concat([data_frame, (pd.DataFrame(stats, index=[level]))])
+        data_frame = data_frame.round(2)
+        data_frame.to_csv('analyses/number_of_dialogues_and_average_dialogue_length_per_level.csv')
+
+
+
+
+def sort_list(list, distribution):
+    sorted_list = []
+    for i in range(len(distribution)):
+        if distribution[i] in list:
+            sorted_list.append(distribution[i])
+    return sorted_list

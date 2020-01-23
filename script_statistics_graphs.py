@@ -35,7 +35,7 @@ plt.savefig('analyses/dialogue_act_distribution_histogram.png')
 # Get the dialogue act counts per level.
 dialogue_counts = pd.read_csv('analyses/dialogue_act_column_dialogue_act_counts.csv', index_col=[0],
                               names=['Level 1', 'Level 2', 'Level 3', 'Level 4'], header=0)
-dialogue_counts['All Levels'] = dialogue_counts.sum(axis=1, skipna=True)
+# dialogue_counts['All Levels'] = dialogue_counts.sum(axis=1, skipna=True)
 dialogue_counts = dialogue_counts.reindex(distribution_order.index)
 
 # Plot the dialogue act counts per level.
@@ -105,13 +105,15 @@ plt.savefig('analyses/speaker_ratios_per_level_histogram.png')
 sns.set_palette(sns.color_palette('Blues_r', 6))
 statistics.get_bigram_distribution()
 for level in [1, 2, 3, 4]:
+    # sns.set_palette(sns.color_palette('Blues_r', 6)[level])
     bigram_distribution = pd.read_csv('analyses/level_' + str(level) + '_dialogue_bigram_distribution.csv',
                                       index_col=[0, 1], names=['Distribution'], header=0)
     bigram_distribution = bigram_distribution.sort_values(by=['Distribution'], ascending=False)
+    bigram_distribution.to_csv('analyses/sorted_level_' + str(level) + '_dialogue_bigram_distribution.csv')
 
     # Plots the bigram distribution per level.
     graph = bigram_distribution.plot.line()
-    plt.ylim(0, 1.0)
+    plt.ylim(0, 0.1)
     _, labels = plt.xticks()
     graph.set_xticklabels(labels, visible=False)
     plt.xlabel("Bigrams")
@@ -127,7 +129,7 @@ for level in [1, 2, 3, 4]:
     plt.xlabel("Occurance")
     plt.ylabel("Bigrams")
     plt.title('Top 40 Most Occuring Bigrams at Level ' + str(level))
-    plt.xlim(0, 1.0)
+    plt.xlim(0, 0.1)
     plt.tight_layout()
     plt.savefig('analyses/most_occuring_bigrams_level_' + str(level) + '_histogram.png')
 

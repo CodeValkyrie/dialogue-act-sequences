@@ -259,3 +259,10 @@ plt.xlabel("Level")
 plt.ylabel("Utterance Length")
 plt.tight_layout(2)
 plt.savefig('analyses/average_utterance_length_per_speaker_per_level_histogram.png')
+
+
+dialogue_dict[ID] = {bigram: count / dialogue_length for bigram, count in dialogue_dict[ID].items()}
+
+# The average distribution over all the dialogues is stored in a new DataFrame for each level.
+level_dialogue = pd.DataFrame(dialogue_dict)
+level_dialogue = (level_dialogue.sum(axis=1, skipna=True) / number_of_dialogues).sort_index()

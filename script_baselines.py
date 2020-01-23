@@ -28,10 +28,10 @@ data.data.to_csv('analyses/simple_baselines_predictions.csv')
 # Gets the precision, recall and f1-score for every dialogue act for different baselines.
 for baseline in baselines:
     accuracy_dict = dict()
-    columns = ['labels_2_gram', baseline]
-    confusion_matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
-    confusion_matrix.to_csv('analyses/' + baseline + '_error_analysis.csv')
+    # confusion_matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
+    # confusion_matrix.to_csv('analyses/' + baseline + '_error_analysis.csv')
     for dialogue_act in data.DAs:
+        columns = ['labels_2_gram', baseline]
         precision, recall, f1 = statistics.precision_recall_f1(data.data, columns, dialogue_act)
 
         if 'all_levels' not in accuracy_dict.keys():
@@ -66,7 +66,6 @@ for baseline in baselines:
 
     # Stores all the accuracy scores for all the levels over all the dialogue acts into a DataFrame.
     accuracies = pd.concat(frames, keys=level_accuracies).T.round(4)
-    print(accuracies)
 
     # Saves the accuracy DataFrame to a .csv file.
     accuracy_file = 'analyses/model_' + baseline + '_baseline_accuracy.csv'

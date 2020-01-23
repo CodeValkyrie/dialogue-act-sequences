@@ -16,6 +16,7 @@ from data import Preprocessing, Statistics
 
 settings = ['unweighted', 'weighted']
 sequence_lengths = [2, 3, 5, 7, 10, 15, 20]
+levels = [1, 2, 3, 4]
 
 # Reads in the data containing the predictions of the model with sentence embeddings for different sequence lengths
 filename = 'analyses/new_model_predictions.csv'
@@ -29,6 +30,14 @@ for sequence_length in sequence_lengths:
     error_file = 'analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_error_analysis.csv'
     matrix.to_csv(error_file)
 
+    # Computes the confusion matrix for different levels with the sequence length.
+    for level in levels:
+        level_data = data.data[data.data['level'] == level]
+        matrix = (statistics.get_normalised_confusion_matrix(level_data, columns) * 100).round(2)
+        error_file = 'analyses/weighted_model_with_txt_sequence_length_' + str(sequence_length) + '_level_' + \
+                     str(level) + '_error_analysis.csv'
+        matrix.to_csv(error_file)
+
 # Reads in the data containing the predictions of the old weighted and unweighted models.
 filename = 'analyses/old_model_sequence_length_3_test_set_predictions.csv'
 data = Preprocessing(filename)
@@ -40,4 +49,10 @@ for weighted in settings:
     matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
     error_file = 'analyses/old_' + weighted + '_model_sequence_length_3_error_analysis.csv'
     matrix.to_csv(error_file)
+    for level in levels:
+        level_data = data.data[data.data['level'] == level]
+        matrix = (statistics.get_normalised_confusion_matrix(level_data, columns) * 100).round(2)
+        error_file = 'analyses/old_' + weighted + '_model_sequence_length_3_level_' + \
+                     str(level) + '_error_analysis.csv'
+        matrix.to_csv(error_file)
 
