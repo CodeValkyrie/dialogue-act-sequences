@@ -113,6 +113,18 @@ for sequence_length in sequence_lengths:
                       index=["Old Weighted Model and Sequence Length " + str(sequence_length)])
     data_stats = pd.concat([data_stats, df])
 
+for baseline in baselines:
+    one = data_frame[data_frame["Model"] == "Old weighted Model"][["F1-Score"]].to_numpy()
+    two = data_frame[data_frame["Model"] == baseline][["F1-Score"]].to_numpy()
+    t_stat, p_value = stats.ttest_ind(one, two)
+    mean1 = np.mean(one)
+    mean2 = np.mean(two)
+    c_d = cohen_d(one, two)
+    df = pd.DataFrame({'t-stat': t_stat, 'p-value': p_value, 'mean 1': mean1,
+                       'mean 2': mean2, 'cohen-d': c_d},
+                      index=["Old Weighted Model and " + baseline_mapping[baseline] + " Baseline"])
+    data_stats = pd.concat([data_stats, df])
+
 data_stats = data_stats[data_stats["p-value"] != 1.0]
 data_stats = data_stats.drop_duplicates(subset=['p-value'])
 data_stats = data_stats.round(4)
