@@ -133,6 +133,26 @@ for level in [1, 2, 3, 4]:
     plt.tight_layout()
     plt.savefig('analyses/most_occuring_bigrams_level_' + str(level) + '_histogram.png')
 
+train = pd.read_csv('data/train_belc_das_2020.csv', index_col=[0], header=[0])
+test = pd.read_csv('data/test_belc_das_2020.csv', index_col=[0], header=[0])
+
+distribution_train = train['dialogue_act'].value_counts().divide(train.shape[0]).to_frame()
+distribution_train.columns = ['Training Set']
+distribution_test = test['dialogue_act'].value_counts().divide(test.shape[0]).to_frame()
+distribution_test.columns = ['Test Set']
+train_test_distribution = distribution_train.merge(distribution_test, how='left', left_index=True, right_index=True)
+plt.close()
+
+sns.set_palette([sns.color_palette('Blues', 7)[3], sns.color_palette('Blues', 7)[6]])
+train_test_distribution.plot.barh()
+_, labels = plt.xticks()
+graph.set_xticklabels(labels, rotation=45, horizontalalignment='right', fontsize='x-small')
+plt.title('Training and Test Set Dialogue Act Distributions')
+plt.xlabel("Distribution")
+plt.ylabel("Dialogue Act")
+plt.tight_layout(2)
+plt.savefig('analyses/dialogue_act_distribution_train_test_histogram.png')
+
 
 
 
