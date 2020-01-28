@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import torch
 from old_model_without_text import LSTM
 from data import Preprocessing, DataSet
 from train import train, evaluate
@@ -7,6 +8,8 @@ from train import train, evaluate
 ''' This script trains the weighted LSTM model without sentence embeddings on the training set and stores the prediction 
     made on the test set. 
 '''
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 sequence_length = 3
@@ -52,7 +55,7 @@ for weighted in models:
 
     # Initialises model.
     model = LSTM(input_dimensions=[2, 13, 4], embedding_dimensions=embedding_dimensions,
-                 hidden_nodes=hidden_nodes, n_layers=1, n_classes=13, input_classes=input_classes)
+                 hidden_nodes=hidden_nodes, n_layers=1, n_classes=13, input_classes=input_classes).to(device)
 
     # Trains the model on the training set.
     train(model, train_data, learning_rate, batch_size, epochs, weighted)
