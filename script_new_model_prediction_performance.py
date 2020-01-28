@@ -24,7 +24,7 @@ embedding_dimensions = [1, 7, 2]
 # Training hyper parameters.
 learning_rate = 0.001
 batch_size = 16
-epochs = 1
+epochs = 20
 
 data_frame = pd.read_csv('data/test_belc_das_2020.csv')
 
