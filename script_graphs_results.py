@@ -208,7 +208,7 @@ for sequence_length in sequence_lengths:
     data_frame = pd.concat([data_frame, accuracies], ignore_index=True)
 
 for model in old_models:
-    filename = 'analyses/' + model + '_model_sequence_length_3_d_s_l_u_accuracy.csv'
+    filename = 'analyses/old_' + weighted + '_model_sequence_length_3_accuracy.csv'
     accuracies = pd.read_csv(filename, index_col=[0], header=[0, 1])
     accuracies = accuracies['all_levels']['p']
     accuracies = accuracies.reset_index()
@@ -295,7 +295,7 @@ for sequence_length in sequence_lengths:
     data_frame = pd.concat([data_frame, accuracies], ignore_index=True)
 
 for model in old_models:
-    filename = 'analyses/' + model + '_model_sequence_length_3_d_s_l_u_accuracy.csv'
+    filename = 'analyses/old_' + weighted + '_model_sequence_length_3_accuracy.csv'
     accuracies = pd.read_csv(filename, index_col=[0], header=[0, 1])
     accuracies = accuracies['all_levels']['r']
     accuracies = accuracies.reset_index()
