@@ -65,6 +65,8 @@ python script_significance_test.py
 
 ### Other Important Files
 
+These files are needed for word embeddings using [GloVe](nlp.stanford.edu/data/wordvecs)
+
 ```
 weights_matrix.npy          - contains the weight matrix that converts word to word embedding vectors
 word_vector_mapping.json    - contains the mapping of words to the vectors in weights_matrix
