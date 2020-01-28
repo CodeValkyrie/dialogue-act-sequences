@@ -2,7 +2,7 @@ import pandas as pd
 from data import Preprocessing, Statistics
 
 
-""" This is a script that stores the prediction performance accuracy scores for different baselines. 
+""" This is a script that stores the predictions and the prediction performance accuracy scores for different baselines. 
     The data is read in from a .csv file containing the predictions of different models 
     and input settings. Only the labels will be used as these stay the same for all the model settings and baselines.
 
@@ -28,8 +28,9 @@ data.data.to_csv('analyses/simple_baselines_predictions.csv')
 # Gets the precision, recall and f1-score for every dialogue act for different baselines.
 for baseline in baselines:
     accuracy_dict = dict()
-    # confusion_matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
-    # confusion_matrix.to_csv('analyses/' + baseline + '_error_analysis.csv')
+    columns = ['labels_2_gram', baseline]
+    confusion_matrix = (statistics.get_normalised_confusion_matrix(data.data, columns) * 100).round(2)
+    confusion_matrix.to_csv('analyses/' + baseline + '_error_analysis.csv')
     for dialogue_act in data.DAs:
         columns = ['labels_2_gram', baseline]
         precision, recall, f1 = statistics.precision_recall_f1(data.data, columns, dialogue_act)

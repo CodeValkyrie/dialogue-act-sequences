@@ -3,6 +3,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from data import Statistics, Preprocessing
 
+''' This file plots all the statistics graphs needed for the thesis report. '''
+
 # Preprocesses the data.
 preprocessed = Preprocessing('data/DA_labeled_belc_2019.csv')
 statistics = Statistics(preprocessed)

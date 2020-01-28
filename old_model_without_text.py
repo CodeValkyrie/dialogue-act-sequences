@@ -1,7 +1,10 @@
 import torch.nn as nn
 import torch
 
+''' This file contains the LSTM model with text embeddings. '''
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class LSTM(nn.Module):
     """ Recurrent Neural Network (RNN) model"""

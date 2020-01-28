@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
 import torch
-from main import train, evaluate, train_n_gram, evaluate_n_gram
+from train import train, evaluate, train_n_gram, evaluate_n_gram
 from new_model_with_text import LSTM
-from nltk.lm import NgramCounter
+
+''' This file contains the CrossValidation Class that contains the functions needed to perform cross validation on the 
+model with sentence embeddings.'''
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

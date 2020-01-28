@@ -266,3 +266,27 @@ dialogue_dict[ID] = {bigram: count / dialogue_length for bigram, count in dialog
 # The average distribution over all the dialogues is stored in a new DataFrame for each level.
 level_dialogue = pd.DataFrame(dialogue_dict)
 level_dialogue = (level_dialogue.sum(axis=1, skipna=True) / number_of_dialogues).sort_index()
+
+
+def main():
+    """ Runs the RNN algorithm. """
+
+    # Makes a Dataset object from the dataset.
+    dataset = DataSet()
+
+    # Defines hyperparameters for model initialisation.
+    n_classes = 13
+    n_layers = 1
+    hidden_nodes = 64
+
+    input_dimensions = [2, 13, 4]
+    embedding_dimensions = [4, 20, 10]
+
+    lstm = LSTM(input_dimensions, embedding_dimensions, hidden_nodes, n_layers, n_classes).to(device)
+
+    # Defines hyperparameters for training initialisation.
+    learning_rate = 5e-3
+    batch_size = 32
+    epochs = 20
+    train(lstm, dataset, learning_rate, batch_size, epochs)
+    return 0

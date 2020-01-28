@@ -1,7 +1,9 @@
 from data import Preprocessing, Statistics
 
 
-""" This is a script that stores the normalised confusion matrix of the dialogue act prediction.
+""" This is a script that stores the normalised confusion matrix of the dialogue act prediction for the LSTM models.
+    For this script to work, the new_model_predictions.csv and old_model_sequence_length_3_test_set_predictions.csv must
+    be present in the analysis folder.
 
     The variables that need to be specified:
         weighted           = chosen from {"weighted", "unweighted"} to specify which model's predictions are to be used.

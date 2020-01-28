@@ -3,8 +3,14 @@ import numpy as np
 from crossvalidation_old_model import CrossValidation
 from data import DataSet, Preprocessing
 
-""" This is a scrpt that performs cross-validation on an lstm model given the different settings below.
+""" This is a script that performs cross-validation on an LSTM model without sentence embeddings given the different 
+    settings below.
+
     The variables that need to be specified:
+        learning_rates          = a list containing several learning rates to do the search over.
+        hidden_dimensions       = a list containing numbers of hidden nodes to do the search over.    
+        embedding_dimensions    = a list containing several embedding dimensions to do the search over.
+        weighted                = list containing the weighted and unweighted setting to search over.
 
     The script outputs a matrix containing the mean accuracy of the cross-validation per hyper parameter setting.     
 """

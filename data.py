@@ -3,6 +3,16 @@ import numpy as np
 import torch
 import json
 
+''' This file contains the DataSet, Preprocessing and Statistics Class:
+    DataSet:        contains the functionality to load the dialogue act, speaker, level and utterance lengths data 
+                    efficiently at runtime. It is initialised with a Preprocessing object.
+    Preprocessing:  contains the functionality to preprocess the dialogue act, speaker, level and utterance lengths data
+                    and to store it in a way that the DataSet Class can work with. The Preprocessing class is 
+                    initialised with a file containing the data to be preprocessed. The Preprocessing object stores some
+                    inportant information on the data, like the number of classes and the unique class labels.
+    Statistics:     containd all the statistics functions. It is initialised with a Preprocessing object. 
+'''
+
 
 class DataSet:
 

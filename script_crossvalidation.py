@@ -1,12 +1,10 @@
-import torch
 import pandas as pd
 import numpy as np
 from crossvalidation_new_model import CrossValidation
 from data import DataSet, Preprocessing
-from new_model_with_text import LSTM
 
 
-""" This is a scrpt that performs cross-validation on an lstm model given the different settings below.
+""" This is a script that performs cross-validation on an lstm model given the different settings below.
 
     The variables that need to be specified:
         sequence_lengths    = a list containing different sequence lengths
@@ -23,8 +21,7 @@ from new_model_with_text import LSTM
 
 
 # Analysis parameters.
-# sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
-sequence_lengths = [3]
+sequence_lengths = [20, 15, 10, 7, 5, 3, 2]
 levels = [1, 2, 3, 4]
 k = 10
 

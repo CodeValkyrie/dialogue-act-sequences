@@ -4,7 +4,10 @@ import numpy as np
 import json
 import pandas as pd
 
+''' This file contains the LSTM model with text embeddings. '''
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class LSTM(nn.Module):
     """ Recurrent Neural Network (RNN) model"""
@@ -76,9 +79,9 @@ class LSTM(nn.Module):
 
         # Constructs the right input according to which classes are wanted.
         input = torch.empty(dims[0], dims[1], 0).to(device)
-        input = torch.cat((input, self.speaker_embedding(data[:,:,0]).float()), dim=2)
-        input = torch.cat((input, self.DA_embedding(data[:,:,1]).float()), dim=2)
-        input = torch.cat((input, self.level_embedding(data[:,:,2]).float()), dim=2)
+        input = torch.cat((input, self.speaker_embedding(data[:, :, 0]).float()), dim=2)
+        input = torch.cat((input, self.DA_embedding(data[:, :, 1]).float()), dim=2)
+        input = torch.cat((input, self.level_embedding(data[:, :, 2]).float()), dim=2)
         input = torch.cat((input, data[:, :, 3].unsqueeze(2).float()), dim=2)
 
         # Compute the utterance text embedding for the batch.

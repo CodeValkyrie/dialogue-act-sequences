@@ -4,39 +4,15 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import pandas as pd
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
-from new_model_with_text import LSTM
-from data import DataSet
+from sklearn.metrics import accuracy_score
 from nltk.util import ngrams
 from nltk.lm import MLE
-from nltk.lm.preprocessing import padded_everygram_pipeline
+
+''' This file contains the training and evaluation functions for the LSTM and n-gram models. '''
 
 # Global Variables initialisation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def main():
-    """ Runs the RNN algorithm. """
-
-    # Makes a Dataset object from the dataset.
-    dataset = DataSet()
-
-    # Defines hyperparameters for model initialisation.
-    n_classes = 13
-    n_layers = 1
-    hidden_nodes = 64
-
-    input_dimensions = [2, 13, 4]
-    embedding_dimensions = [4, 20, 10]
-
-    lstm = LSTM(input_dimensions, embedding_dimensions, hidden_nodes, n_layers, n_classes).to(device)
-
-    # Defines hyperparameters for training initialisation.
-    learning_rate = 5e-3
-    batch_size = 32
-    epochs = 20
-    train(lstm, dataset, learning_rate, batch_size, epochs)
-    return 0
 
 ###################################################################################
 #                            HELPER FUNCTIONS                                     #

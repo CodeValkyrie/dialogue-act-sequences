@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 import torch
-from main import train, evaluate, train_n_gram, evaluate_n_gram
+from train import train, evaluate, train_n_gram, evaluate_n_gram
 from old_model_without_text import LSTM
+
+''' This file contains the CrossValidation Class that contains the functions needed to perform cross validation on the 
+model without sentence embeddings.'''
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

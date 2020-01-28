@@ -4,6 +4,10 @@ import pickle
 import pandas as pd
 import json
 
+''' This file creates the matrix that is needed to convert the words in the data set to word embedding vectors. The 
+    word embedder used is GloVe.
+'''
+
 glove_path = "glove_6B"
 
 words = []

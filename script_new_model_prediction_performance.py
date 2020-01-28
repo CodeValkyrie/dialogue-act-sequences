@@ -2,7 +2,11 @@ import pandas as pd
 import torch
 from new_model_with_text import LSTM
 from data import Preprocessing, DataSet
-from main import train, evaluate
+from train import train, evaluate
+
+''' This script trains the weighted LSTM model with sentence embeddings on the training set and stores the prediction 
+    made on the test set. 
+'''
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

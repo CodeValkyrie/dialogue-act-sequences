@@ -6,13 +6,14 @@ from scipy import stats
 
 """ This is a script that plots the f1-scores per dialogue act given different input settings and sequence lengths. 
     The data is read in from .csv files containing the accuracy scores of different models and input settings.
+    The script also plots the confusion matrices of the predictions for the models that are in .csv files.
 
     The variables that need to be specified:
         weighted           = chosen from {"weighted", "unweighted"} to specify which model's predictions are to be used.
         sequence_lengths   = a list containing the sequence lengths with which the model made the predictions.
         baselines          = a list containing all the baselines of which the f1-scores should be included
 
-    The script outputs png plots containing the f1-scores of the dialogue acts per input setting.       
+    The script outputs .png plots containing the f1-scores of the dialogue acts per input setting.       
 """
 
 weighted = 'weighted'
@@ -61,22 +62,6 @@ for model in old_models:
     accuracies.columns = ["Dialogue Act", "F1-Score"]
     accuracies["Model"] = "Old " + model + " Model"
     data_frame = pd.concat([data_frame, accuracies], ignore_index=True)
-
-########################################################################################################################
-#                                       DOES SIGNIFICANCE TESTS ON THE DATA                                            #
-########################################################################################################################
-
-for one_sequence_length in sequence_lengths:
-    for two_sequence_length in sequence_lengths:
-        one = data_frame[data_frame["Model"] == "Sequence Length " + str(one_sequence_length)][["F1-Scores"]].to_numpy()
-        two = data_frame[data_frame["Model"] == "Sequence Length " + str(two_sequence_length)][["F1-Scores"]].to_numpy()
-        t_stat, p_value = stats.ttest_ind()
-
-
-
-
-
-
 
 ########################################################################################################################
 #                   MAKE PLOT WITH DA ON X-AXIS AND F1-SCORE ON Y-AXIS PER MODEL IN ONE GRAPH                          #

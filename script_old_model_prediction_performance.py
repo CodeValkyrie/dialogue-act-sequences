@@ -2,7 +2,12 @@ import pandas as pd
 import numpy as np
 from old_model_without_text import LSTM
 from data import Preprocessing, DataSet
-from main import train, evaluate
+from train import train, evaluate
+
+''' This script trains the weighted LSTM model without sentence embeddings on the training set and stores the prediction 
+    made on the test set. 
+'''
+
 
 sequence_length = 3
 levels = [1, 2, 3, 4]

@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
+''' This script performs significance tests on the f1 scores between the models. '''
+
 weighted = 'weighted'
 sequence_lengths = [2, 3, 5, 7, 10, 15, 20]
 baselines = ['majority_class', 'random', 'weighted_random', '2gram', '3gram']
