@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 from main import train, evaluate, train_n_gram, evaluate_n_gram
-from model import LSTM
+from new_model_with_text import LSTM
 from nltk.lm import NgramCounter
 
 

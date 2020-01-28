@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from crossvalidation_old import CrossValidation
+from crossvalidation_old_model import CrossValidation
 from data import DataSet, Preprocessing
 
 """ This is a scrpt that performs cross-validation on an lstm model given the different settings below.
@@ -63,4 +63,4 @@ for model in weighted:
 
 # Makes a pandas DataFrame to output to a .csv file.
 data = pd.DataFrame(output, columns=['sequence length', 'accuracy', 'SD'])
-data.to_csv('analyses/accuracy_per_hyper_parameter_setting.csv', index=None, header=True)
+data.to_csv('analyses/accuracy_per_hyper_parameter_setting_old_model.csv', index=None, header=True)

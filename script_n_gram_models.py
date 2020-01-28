@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from crossvalidation import CrossValidation
+from crossvalidation_new_model import CrossValidation
 from data import DataSet, Preprocessing, Statistics
 
 

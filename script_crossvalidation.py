@@ -1,9 +1,9 @@
 import torch
 import pandas as pd
 import numpy as np
-from crossvalidation import CrossValidation
+from crossvalidation_new_model import CrossValidation
 from data import DataSet, Preprocessing
-from model import LSTM
+from new_model_with_text import LSTM
 
 
 """ This is a scrpt that performs cross-validation on an lstm model given the different settings below.

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from model_without_text import LSTM
+from old_model_without_text import LSTM
 from data import Preprocessing, DataSet
 from main import train, evaluate
 

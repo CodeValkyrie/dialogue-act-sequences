@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 from main import train, evaluate, train_n_gram, evaluate_n_gram
-from model_without_text import LSTM
+from old_model_without_text import LSTM
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

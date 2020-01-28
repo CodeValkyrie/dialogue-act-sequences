@@ -1,6 +1,6 @@
 import pandas as pd
 import torch
-from model import LSTM
+from new_model_with_text import LSTM
 from data import Preprocessing, DataSet
 from main import train, evaluate
 

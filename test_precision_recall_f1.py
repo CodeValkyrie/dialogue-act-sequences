@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from data import Statistics
 
 """ This is a script that tests the correctness of the precision_recall_f1() function in the Statistics class."""

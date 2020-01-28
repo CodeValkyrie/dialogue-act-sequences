@@ -125,6 +125,18 @@ for baseline in baselines:
                       index=["Old Weighted Model and " + baseline_mapping[baseline] + " Baseline"])
     data_stats = pd.concat([data_stats, df])
 
+one = pd.read_csv('analyses/old_weighted_model_sequence_length_3_accuracy.csv', index_col=[0], header=[0, 1])
+one = one['all_levels']['f1'].to_numpy()
+two = pd.read_csv('analyses/old_unweighted_model_sequence_length_3_accuracy.csv', index_col=[0], header=[0, 1])
+two = two['all_levels']['f1'].to_numpy()
+t_stat, p_value = stats.ttest_ind(one, two)
+mean1 = np.mean(one)
+mean2 = np.mean(two)
+c_d = cohen_d(one, two)
+df = pd.DataFrame({'t-stat': t_stat, 'p-value': p_value, 'mean 1': mean1, 'mean 2': mean2, 'cohen-d': c_d},
+                  index=["Old Weighted Model and Old Unweighted Model"])
+data_stats = pd.concat([data_stats, df])
+
 data_stats = data_stats[data_stats["p-value"] != 1.0]
 data_stats = data_stats.drop_duplicates(subset=['p-value'])
 data_stats = data_stats.round(4)
