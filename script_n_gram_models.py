@@ -54,6 +54,7 @@ test_data.to_csv('analyses/n_gram_models_predictions.csv')
 # Reads in the data containing the predictions of a model under the given settings.
 data = Preprocessing('analyses/n_gram_models_predictions.csv')
 statistics = Statistics(data)
+statistics.get_da_distribution()
 
 # Gets the precision, recall and f1-score for every dialogue act for different model input settings.
 for n_gram in n:
